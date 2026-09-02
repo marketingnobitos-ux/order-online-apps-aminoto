@@ -1,0 +1,3 @@
+# Pastikan shell script selalu LF (Unix), meski di-commit dari Windows,
+# agar bisa dijalankan di VPS tanpa error "bad interpreter".
+*.sh text eol=lf

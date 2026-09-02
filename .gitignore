@@ -1,6 +1,7 @@
 node_modules/
 build/
 dist/
+aminoto-dist.zip
 coverage/
 .DS_Store
 *.log
