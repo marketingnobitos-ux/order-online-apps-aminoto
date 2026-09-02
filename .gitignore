@@ -2,6 +2,7 @@ node_modules/
 build/
 dist/
 aminoto-dist.zip
+deploy.env
 coverage/
 .DS_Store
 *.log
