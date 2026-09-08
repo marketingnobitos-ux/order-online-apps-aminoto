@@ -66,7 +66,8 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'd9', name: 'Teh Pucuk', price: 5000, category: 'Minuman' },
   { id: 'd10', name: 'Nipis Madu', price: 7000, category: 'Minuman' },
   { id: 'd11', name: 'Es Teh Kampul', price: 8000, category: 'Minuman' },
-  { id: 'd12', name: 'Es Tjampolay', price: 8000, category: 'Minuman' }
+  { id: 'd12', name: 'Es Tjampolay', price: 8000, category: 'Minuman' },
+  { id: 'd13', name: 'Teh Manis Hangat', price: 5000, category: 'Minuman' }
 ];
 
 // ── Konfigurasi terpusat ──────────────────────────────────────────
