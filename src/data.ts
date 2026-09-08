@@ -29,6 +29,7 @@ export const BRANCHES: Branch[] = [
 
 export const MENU_ITEMS: MenuItem[] = [
   // Makanan
+  { id: 'm23', name: 'Nasi Putih', price: 5000, category: 'Makanan' },
   { id: 'm1', name: 'Pecel Lele', price: 18000, category: 'Makanan' },
   { id: 'm2', name: 'Ayam Negri', price: 23000, category: 'Makanan' },
   { id: 'm3', name: 'Ayam Kampung', price: 30000, category: 'Makanan' },
@@ -51,10 +52,10 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'm20', name: 'Kol Goreng', price: 6000, category: 'Makanan' },
   { id: 'm21', name: 'Jukut Goreng', price: 8000, category: 'Makanan' },
   { id: 'm22', name: 'Pencok Katel', price: 8000, category: 'Makanan' },
-  { id: 'm23', name: 'Nasi Putih', price: 5000, category: 'Makanan' },
   { id: 'm24', name: 'Krupuk 1 Bungkus', price: 5000, category: 'Makanan' },
 
   // Minuman
+  { id: 'd13', name: 'Teh Manis Hangat', price: 5000, category: 'Minuman' },
   { id: 'd1', name: 'Tawar Hangat', price: 3000, category: 'Minuman' },
   { id: 'd2', name: 'Es Teh Tawar', price: 3000, category: 'Minuman' },
   { id: 'd3', name: 'Es Teh Manis', price: 5000, category: 'Minuman' },
@@ -66,8 +67,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'd9', name: 'Teh Pucuk', price: 5000, category: 'Minuman' },
   { id: 'd10', name: 'Nipis Madu', price: 7000, category: 'Minuman' },
   { id: 'd11', name: 'Es Teh Kampul', price: 8000, category: 'Minuman' },
-  { id: 'd12', name: 'Es Tjampolay', price: 8000, category: 'Minuman' },
-  { id: 'd13', name: 'Teh Manis Hangat', price: 5000, category: 'Minuman' }
+  { id: 'd12', name: 'Es Tjampolay', price: 8000, category: 'Minuman' }
 ];
 
 // ── Konfigurasi terpusat ──────────────────────────────────────────
