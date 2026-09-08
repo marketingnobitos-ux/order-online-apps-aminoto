@@ -35,7 +35,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'm3', name: 'Ayam Kampung', price: 30000, category: 'Makanan' },
   { id: 'm4', name: 'Bebek', price: 33000, category: 'Makanan' },
   { id: 'm5', name: 'Nila', price: 25000, category: 'Makanan' },
-  { id: 'm6', name: 'Gurame', price: 35000, category: 'Makanan' },
+  { id: 'm6', name: 'Gurame', price: 30000, category: 'Makanan' },
   { id: 'm7', name: 'Tahu', price: 3000, category: 'Makanan' },
   { id: 'm8', name: 'Tempe', price: 3000, category: 'Makanan' },
   { id: 'm9', name: 'Sayur Asem', price: 7000, category: 'Makanan' },

@@ -80,9 +80,7 @@ export default function App() {
         </main>
         
         <StickyCheckoutBar cart={cart} setView={setView} view={view} />
-        {['home', 'menu', 'faq'].includes(view) && (
-          <BottomNav view={view} setView={setView} />
-        )}
+        <BottomNav view={view} setView={setView} />
       </div>
     </div>
   );
