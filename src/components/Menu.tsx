@@ -3,7 +3,7 @@ import { MENU_ITEMS, BRANCHES } from '../data';
 import { Search, Plus } from 'lucide-react';
 import { MenuItem } from '../types';
 
-const TABS = ['Semua', 'Makanan', 'Minuman', 'Menu Tambahan'];
+const TABS = ['Semua', 'Makanan', 'Minuman'];
 
 export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCart: (item: MenuItem, variant?: string) => void; selectedBranch: string; setSelectedBranch: (v: string) => void; }) {
   const [search, setSearch] = useState('');
