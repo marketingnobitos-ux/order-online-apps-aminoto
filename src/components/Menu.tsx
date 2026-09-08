@@ -12,6 +12,7 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
   const [variantModalItem, setVariantModalItem] = useState<MenuItem | null>(null);
   const [selectedCooking, setSelectedCooking] = useState<string | null>(null);
   const [selectedCut, setSelectedCut] = useState<string | null>(null);
+  const [selectedEgg, setSelectedEgg] = useState<string | null>(null);
 
   const filteredMenu = useMemo(() => {
     return MENU_ITEMS.filter(item => {
@@ -24,11 +25,13 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
   const handleAddClick = (item: MenuItem) => {
     const nameLower = item.name.toLowerCase();
     const needsVariant = ['gurame', 'nila', 'ayam negri', 'ayam kampung', 'bebek'].includes(nameLower);
-    
-    if (needsVariant) {
+    const isTelor = nameLower === 'telor dadar / ceplok';
+
+    if (needsVariant || isTelor) {
       setVariantModalItem(item);
       setSelectedCooking(null);
       setSelectedCut(null);
+      setSelectedEgg(null);
     } else {
       addToCart(item);
     }
@@ -129,9 +132,10 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
 
       {variantModalItem && (() => {
         const nameLower = variantModalItem.name.toLowerCase();
+        const isTelor = nameLower === 'telor dadar / ceplok';
         const needsCut = ['ayam negri', 'ayam kampung', 'bebek'].includes(nameLower);
-        const finalPrice = variantModalItem.price + (selectedCooking === 'Bakar' ? 2000 : 0);
-        const isReadyToAdd = selectedCooking && (!needsCut || selectedCut);
+        const finalPrice = isTelor ? variantModalItem.price : variantModalItem.price + (selectedCooking === 'Bakar' ? 2000 : 0);
+        const isReadyToAdd = isTelor ? !!selectedEgg : (selectedCooking && (!needsCut || selectedCut));
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/40 backdrop-blur-sm">
@@ -141,16 +145,37 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
                 <p className="text-sm font-medium text-gray-500">Sesuaikan pesanan Anda</p>
               </div>
               
+              {isTelor && (
+                <div className="flex flex-col gap-3">
+                  <h4 className="text-sm font-bold text-gray-900">Pilihan Telor</h4>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelectedEgg('Dadar')}
+                      className={`flex-1 py-3 px-3 rounded-2xl border flex flex-col items-center justify-center transition-all ${selectedEgg === 'Dadar' ? 'border-[#06402B] bg-[#F4FBF4] shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                    >
+                      <span className={`font-bold text-sm ${selectedEgg === 'Dadar' ? 'text-[#06402B]' : 'text-gray-700'}`}>Dadar</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedEgg('Ceplok')}
+                      className={`flex-1 py-3 px-3 rounded-2xl border flex flex-col items-center justify-center transition-all ${selectedEgg === 'Ceplok' ? 'border-[#06402B] bg-[#F4FBF4] shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                    >
+                      <span className={`font-bold text-sm ${selectedEgg === 'Ceplok' ? 'text-[#06402B]' : 'text-gray-700'}`}>Ceplok</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!isTelor && (
               <div className="flex flex-col gap-3">
                 <h4 className="text-sm font-bold text-gray-900">Cara Masak</h4>
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => setSelectedCooking('Goreng')}
                     className={`flex-1 py-3 px-3 rounded-2xl border flex flex-col items-center justify-center transition-all ${selectedCooking === 'Goreng' ? 'border-[#06402B] bg-[#F4FBF4] shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                   >
                     <span className={`font-bold text-sm ${selectedCooking === 'Goreng' ? 'text-[#06402B]' : 'text-gray-700'}`}>Goreng</span>
                   </button>
-                  <button 
+                  <button
                     onClick={() => setSelectedCooking('Bakar')}
                     className={`flex-1 py-3 px-3 rounded-2xl border flex flex-col items-center justify-center transition-all ${selectedCooking === 'Bakar' ? 'border-[#06402B] bg-[#F4FBF4] shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                   >
@@ -159,6 +184,7 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
                   </button>
                 </div>
               </div>
+              )}
 
               {needsCut && (
                 <div className="flex flex-col gap-3">
@@ -186,7 +212,9 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
                     if (isReadyToAdd) {
                       const finalItem = { ...variantModalItem };
                       finalItem.price = finalPrice;
-                      const variantString = needsCut ? `${selectedCooking}, ${selectedCut}` : selectedCooking;
+                      const variantString = isTelor
+                        ? selectedEgg
+                        : (needsCut ? `${selectedCooking}, ${selectedCut}` : selectedCooking);
                       addToCart(finalItem, variantString as string);
                       setVariantModalItem(null);
                     }
