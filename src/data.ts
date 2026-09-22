@@ -7,7 +7,7 @@ export const BRANCHES: Branch[] = [
     address: 'Jl. DR. Cipto Mangunkusumo No.199, Pekiringan, Kec. Kesambi, Kota Cirebon, Jawa Barat 45132',
     mapsUrl: 'https://www.google.com/maps/place/Pecel+Lele+Sambel+Dadak+Aminoto/@-6.7228936,108.5501909,950m/data=!3m2!1e3!4b1!4m6!3m5!1s0x2e6ee3a563e85147:0xacc385845008a051!8m2!3d-6.7228936!4d108.5501909!16s%2Fg%2F11x0q5tsk2',
     status: 'BUKA',
-    hours: '10.00 - 22.00',
+    hours: '11.00 - 22.00',
   },
   {
     id: 'sumber',
@@ -15,7 +15,7 @@ export const BRANCHES: Branch[] = [
     address: 'Jl. Pangeran Cakrabuana No.8, Kemantren, Kec. Sumber, Kabupaten Cirebon, Jawa Barat 45611',
     mapsUrl: 'https://www.google.com/maps/place/Pecel+Lele+Sambel+Dadak+Aminoto+Sumber/@-6.7585171,108.4922366,950m/data=!3m2!1e3!4b1!4m6!3m5!1s0x2e6f1f32b0accab7:0xe032e0ec913fd605!8m2!3d-6.7585171!4d108.4922366!16s%2Fg%2F11zhv9jv3w',
     status: 'BUKA',
-    hours: '10.00 - 22.00',
+    hours: '11.00 - 22.00',
   },
   {
     id: 'ciledug',
@@ -23,7 +23,7 @@ export const BRANCHES: Branch[] = [
     address: 'Ciledug Tengah, Kec. Ciledug, Kabupaten Cirebon, Jawa Barat 45188',
     mapsUrl: 'https://maps.app.goo.gl/5w4LEtTEFnhvY5Jy6',
     status: 'BUKA',
-    hours: '10.00 - 22.00',
+    hours: '11.00 - 22.00',
   }
 ];
 
