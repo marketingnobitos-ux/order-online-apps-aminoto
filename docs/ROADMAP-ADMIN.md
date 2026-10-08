@@ -19,18 +19,20 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ✅ ADM-07 Skill ui-ux-pro-max terpasang (plugin lokal)
 - ✅ ADM-08 UI admin dengan data palsu: filter cabang, ringkasan, rekap bulan/hari/cabang, daftar order, export CSV (`/admin`)
 - ✅ ADM-09 Tombol + Tambah Order (form input admin, data disimpan di memori sampai refresh)
+- ✅ ADM-11 Project Supabase `aminoto-order` (ref `arppizmnunkoiwvsakbp`, Singapore, gratis) dibuat via MCP
+- ✅ ADM-12 Tabel `orders` + RLS (anon insert, admin insert & read). Advisor keamanan 0 temuan
+- ✅ ADM-16a Env Supabase di `.env` lokal dan `deploy.env` VPS; `deploy.sh` kini export variabel
+- 🟡 ADM-27 Edge Function `baca-foto` (Gemini, verify_jwt) ter-deploy; aktif setelah ADM-28 dan form disambung
 - 🟡 ADM-10 Simpan order ke Supabase saat kirim WA (kode ada di `Review.tsx`, nonaktif tanpa env)
 
 ## Menunggu user
-- ⏳ ADM-11 Buat project Supabase, kirim Project URL + anon key
-- ⏳ ADM-12 Jalankan `supabase/schema.sql` di SQL Editor
 - ⏳ ADM-13 Buat akun admin di Supabase Auth
 - ⏳ ADM-14 Keputusan kebijakan data pelanggan (nama, WA tersimpan di DB)
 - ⏳ ADM-28 Masukkan API key Gemini Pro ke Supabase Edge Function secrets (jangan kirim key ke chat)
 
 ## Antrean
 - ✅ ADM-15 Desain ulang admin: tab Ringkasan/Order/Tambah, filter periode + cabang, cari order, tanggal ramah, varian pakai tombol
-- ⬜ ADM-16 Isi env Supabase di VPS, build ulang, deploy (setelah ADM-11)
+- ⬜ ADM-16 Build ulang + deploy dengan env Supabase (setelah form admin disambung ke Supabase)
 - ⬜ ADM-17 Login admin (Supabase Auth) (setelah ADM-12, ADM-13)
 - ⬜ ADM-18 Ganti data palsu dengan query Supabase (setelah ADM-17)
 - ⬜ ADM-19 Cek `/admin` saat refresh di server (nginx `try_files`)
@@ -41,7 +43,6 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ⬜ ADM-24 Akun admin tambahan (opsional)
 - ⬜ ADM-25 Backup tabel `orders` berkala
 - ✅ ADM-26 UI input order dari foto: foto kamera/galeri → Baca foto → item, qty, catatan terisi (hasil contoh). Wajib: cabang, nama, WA, bayar, catatan
-- ⬜ ADM-27 Edge Function Gemini Pro: baca foto nota/kasir jadi item + qty + catatan (setelah ADM-11, ADM-28)
 
 ## Keputusan
 - Baca foto pakai Gemini Pro (berbayar, data tidak dipakai Google). Key hanya di backend.

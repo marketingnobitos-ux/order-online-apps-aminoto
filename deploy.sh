@@ -20,7 +20,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Muat konfigurasi path dari deploy.env bila ada.
 if [ -f "$SCRIPT_DIR/deploy.env" ]; then
   # shellcheck source=/dev/null
+  set -a # export semua variabel (VITE_* perlu terbaca saat npm run build)
   . "$SCRIPT_DIR/deploy.env"
+  set +a
 fi
 
 # REPO_DIR default ke lokasi script ini; WEB_ROOT wajib diisi lewat deploy.env.
