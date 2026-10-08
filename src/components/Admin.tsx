@@ -252,7 +252,12 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
       const { data, error: err } = await supabase.functions.invoke('baca-foto', {
         body: { image, mimeType: 'image/jpeg', menu: MENU_ITEMS.map(m => m.name) },
       });
-      if (err || data?.error) throw new Error(data?.error || err?.message || 'Gagal membaca foto.');
+      if (err) {
+        // Status non-2xx: ambil pesan asli dari body function, bukan pesan generik supabase-js.
+        const detail = await err.context?.json?.().catch(() => null);
+        throw new Error(detail?.error || err.message || 'Gagal membaca foto.');
+      }
+      if (data?.error) throw new Error(data.error);
 
       const hasil: { name: string; qty: number }[] = data.items ?? [];
       const cocok: DraftItem[] = [];
