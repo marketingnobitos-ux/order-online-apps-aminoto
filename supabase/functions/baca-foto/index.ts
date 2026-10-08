@@ -35,7 +35,7 @@ Deno.serve(async (req: Request) => {
   if (!image) return json({ error: 'Field image (base64) wajib.' }, 400);
   if (image.length > 8_000_000) return json({ error: 'Foto terlalu besar.' }, 413);
 
-  const prompt = `Ini foto layar kasir atau nota pesanan rumah makan Pecel Lele Aminoto.\nBaca semua item pesanan. Cocokkan nama item ke daftar menu berikut (pakai nama PERSIS dari daftar; kalau tidak ada yang cocok, tulis nama aslinya):\n${menu.join(', ')}\nBalas HANYA JSON dengan bentuk:\n{"items":[{"name":string,"qty":number,"price":number}],"note":string,"total":number}\nprice = harga satuan dalam rupiah tanpa titik. note = catatan pesanan, kosongkan kalau tidak ada. total = total tertulis di foto.`;
+  const prompt = `Ini foto layar kasir atau nota pesanan rumah makan Pecel Lele Aminoto.\nBaca semua item pesanan. Cocokkan nama item ke daftar menu berikut (pakai nama PERSIS dari daftar; kalau tidak ada yang cocok, tulis nama aslinya):\n${menu.join(', ')}\nBalas HANYA JSON dengan bentuk:\n{"customer":string,"items":[{"name":string,"qty":number}],"note":string}\ncustomer = nama pemesan (di layar kasir biasanya di bawah DINE-IN / TAKE-AWAY di atas tabel), kosongkan kalau tidak ada. note = catatan pesanan, kosongkan kalau tidak ada.`;
 
   const payload = JSON.stringify({
     model,
@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
     }],
     response_format: { type: 'json_object' },
     temperature: 0,
-    max_tokens: 1000,
+    max_tokens: 500,
   });
 
   // Server AI kadang 503 (sibuk) atau 429 (limit sesaat): ulangi sampai 3x dengan jeda bertambah.

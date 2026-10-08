@@ -201,15 +201,16 @@ function infoItem(it: DraftItem) {
   return { menu, butuhMasak, butuhPotong, butuhTelor, harga, varian, lengkap };
 }
 
-// Kecilkan foto (sisi panjang 1600px, JPEG) lalu jadikan base64 untuk dikirim ke Edge Function.
+// Kecilkan foto (sisi panjang 1024px, JPEG) lalu jadikan base64 untuk dikirim ke Edge Function.
+// Foto kecil = upload lebih cepat dan token gambar lebih sedikit, teks layar kasir tetap terbaca.
 async function fotoKeBase64(file: File): Promise<string> {
   const bmp = await createImageBitmap(file);
-  const skala = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const skala = Math.min(1, 1024 / Math.max(bmp.width, bmp.height));
   const c = document.createElement('canvas');
   c.width = Math.round(bmp.width * skala);
   c.height = Math.round(bmp.height * skala);
   c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
-  return c.toDataURL('image/jpeg', 0.85).split(',')[1];
+  return c.toDataURL('image/jpeg', 0.8).split(',')[1];
 }
 
 const normal = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -270,6 +271,7 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
       }
       if (cocok.length) setItems(cocok);
       if (data.note) setCatatan(String(data.note));
+      if (data.customer && !nama.trim()) setNama(String(data.customer));
       setSudahDibaca(true);
       if (tidakCocok.length) setError(`Tidak ada di menu, tambahkan manual: ${tidakCocok.join(', ')}`);
       else if (!cocok.length) setError('Tidak ada item terbaca. Coba foto lebih jelas atau isi manual.');
