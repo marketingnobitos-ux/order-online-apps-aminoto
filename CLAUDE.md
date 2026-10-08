@@ -16,7 +16,10 @@ Home → (pilih cabang di Menu) → Menu → Keranjang → Checkout (nama, WA, m
 
 ## Stack (dari package.json)
 - React 19 + TypeScript, Vite 6, Tailwind CSS 4 (via @tailwindcss/vite), ikon lucide-react.
-- Aplikasi 100% sisi klien. **Tidak memakai AI/Gemini saat berjalan.**
+- App customer: 100% sisi klien, tanpa AI.
+- Admin: tersambung Supabase (login + tabel `orders`). Fitur "input order dari foto"
+  memanggil Gemini lewat Edge Function `baca-foto`. API key Gemini hanya di server
+  Supabase, **tidak pernah** di kode klien.
 
 ## Perintah
 - `npm install` — pasang dependency
