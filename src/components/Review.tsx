@@ -1,6 +1,7 @@
 import React from 'react';
 import { MENU_ITEMS, ADMIN_WHATSAPP, ONLINE_ORDER_OPEN_HOUR, ONLINE_ORDER_CLOSE_HOUR, isOnlineOrderOpen } from '../data';
 import { Plus } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export function Review({ name, whatsapp, paymentMethod, note, selectedBranch, cart, setView, clearCart, addToCart }: any) {
   const [isCopying, setIsCopying] = React.useState(false);
@@ -35,6 +36,27 @@ Mohon segera diproses ya!`;
       await navigator.clipboard.writeText(message);
     } catch (err) {
       console.error('Failed to copy text: ', err);
+    }
+
+    // Simpan order ke database untuk rekap admin. Gagal simpan tidak menghentikan alur WA.
+    if (supabase) {
+      supabase.from('orders').insert({
+        customer_name: name,
+        whatsapp,
+        branch: selectedBranch,
+        payment_method: paymentMethod,
+        note: note || null,
+        items: cart.map((item: any) => ({
+          id: item.menuItem.id,
+          name: item.menuItem.name,
+          variant: item.variant || null,
+          qty: item.quantity,
+          price: item.menuItem.price,
+        })),
+        total,
+      }).then(({ error }) => {
+        if (error) console.error('Gagal simpan order: ', error);
+      });
     }
     
     setTimeout(() => {

@@ -9,6 +9,7 @@ import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { StickyCheckoutBar } from './components/StickyCheckoutBar';
 import { FAQ } from './components/FAQ';
+import { Admin } from './components/Admin';
 
 export default function App() {
   const [view, setView] = useState<ViewState>('home');
@@ -48,6 +49,11 @@ export default function App() {
   };
 
   const clearCart = () => setCart([]);
+
+  // Halaman admin terpisah dari alur customer (URL /admin, tanpa tombol di menu).
+  if (window.location.pathname.startsWith('/admin')) {
+    return <Admin />;
+  }
 
   return (
     <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-gray-50 items-center justify-center">
