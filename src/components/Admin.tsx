@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MOCK_ORDERS, MockOrder, MockOrderItem } from '../lib/mock-orders';
 import { BRANCHES, MENU_ITEMS } from '../data';
+import { supabase } from '../lib/supabase';
 
-// Tahap UI: data masih palsu (mock-orders.ts). Order yang diinput admin hanya disimpan di memori
-// sampai refresh. Login & Supabase menyusul setelah backend siap.
+// Data order dari Supabase (tabel orders). Kalau env Supabase belum diset, pakai data contoh
+// (mock-orders.ts) supaya UI tetap bisa dicoba lokal.
 
 const PAYMENTS = ['QRIS', 'BCA', 'BAYAR DI TEMPAT'];
 const BAKAR_EXTRA = 2000; // sama dengan aturan di Menu.tsx
@@ -200,20 +201,23 @@ function infoItem(it: DraftItem) {
   return { menu, butuhMasak, butuhPotong, butuhTelor, harga, varian, lengkap };
 }
 
-// CONTOH hasil baca foto. Nanti diganti respons Edge Function Gemini (ADM-27).
-const CONTOH_HASIL_FOTO: { items: DraftItem[]; catatan: string } = {
-  items: [
-    { menuId: 'm6', qty: 1, cook: 'Goreng', cut: '', egg: '' },
-    { menuId: 'm5', qty: 1, cook: 'Goreng', cut: '', egg: '' },
-    { menuId: 'm12', qty: 2, cook: '', cut: '', egg: '' },
-    { menuId: 'm13', qty: 2, cook: '', cut: '', egg: '' },
-    { menuId: 'd3', qty: 2, cook: '', cut: '', egg: '' },
-  ],
-  catatan: 'Ikan ya renyah tapi jangan terlalu kering',
-};
+// Kecilkan foto (sisi panjang 1600px, JPEG) lalu jadikan base64 untuk dikirim ke Edge Function.
+async function fotoKeBase64(file: File): Promise<string> {
+  const bmp = await createImageBitmap(file);
+  const skala = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * skala);
+  c.height = Math.round(bmp.height * skala);
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85).split(',')[1];
+}
 
-function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
+const normal = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | null> }) {
   const [foto, setFoto] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [menyimpan, setMenyimpan] = useState(false);
   const [membaca, setMembaca] = useState(false);
   const [sudahDibaca, setSudahDibaca] = useState(false);
   const [nama, setNama] = useState('');
@@ -233,23 +237,45 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
     if (!file) return;
     if (foto) URL.revokeObjectURL(foto);
     setFoto(URL.createObjectURL(file));
+    setFotoFile(file);
     setSudahDibaca(false);
     setSukses('');
   };
 
-  const bacaFoto = () => {
+  const bacaFoto = async () => {
+    if (!fotoFile) return;
+    if (!supabase) return setError('Supabase belum diset, baca foto tidak tersedia.');
     setMembaca(true);
     setError('');
-    // Simulasi. Nanti: kirim foto ke Edge Function Gemini, isi dari hasilnya.
-    setTimeout(() => {
-      setItems(CONTOH_HASIL_FOTO.items.map(it => ({ ...it })));
-      setCatatan(CONTOH_HASIL_FOTO.catatan);
-      setMembaca(false);
+    try {
+      const image = await fotoKeBase64(fotoFile);
+      const { data, error: err } = await supabase.functions.invoke('baca-foto', {
+        body: { image, mimeType: 'image/jpeg', menu: MENU_ITEMS.map(m => m.name) },
+      });
+      if (err || data?.error) throw new Error(data?.error || err?.message || 'Gagal membaca foto.');
+
+      const hasil: { name: string; qty: number }[] = data.items ?? [];
+      const cocok: DraftItem[] = [];
+      const tidakCocok: string[] = [];
+      for (const h of hasil) {
+        const menu = MENU_ITEMS.find(m => normal(m.name) === normal(h.name))
+          ?? MENU_ITEMS.find(m => normal(h.name).includes(normal(m.name)) || normal(m.name).includes(normal(h.name)));
+        if (menu) cocok.push({ ...itemBaru(), menuId: menu.id, qty: Math.max(1, Math.round(h.qty) || 1) });
+        else tidakCocok.push(h.name);
+      }
+      if (cocok.length) setItems(cocok);
+      if (data.note) setCatatan(String(data.note));
       setSudahDibaca(true);
-    }, 900);
+      if (tidakCocok.length) setError(`Tidak ada di menu, tambahkan manual: ${tidakCocok.join(', ')}`);
+      else if (!cocok.length) setError('Tidak ada item terbaca. Coba foto lebih jelas atau isi manual.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal membaca foto.');
+    } finally {
+      setMembaca(false);
+    }
   };
 
-  const simpan = () => {
+  const simpan = async () => {
     setSukses('');
     if (!nama.trim()) return setError('Nama pemesan wajib diisi.');
     if (!/^\+?[0-9]{9,15}$/.test(wa.replace(/[\s-]/g, ''))) return setError('Nomor WhatsApp tidak valid. Contoh: 081234567890');
@@ -262,7 +288,8 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
       const info = infoItem(it);
       return { id: info.menu.id, name: info.menu.name, variant: info.varian || null, qty: it.qty, price: info.harga };
     });
-    onSave({
+    setMenyimpan(true);
+    const gagal = await onSave({
       id: `input-${Date.now()}`,
       created_at: new Date().toISOString(),
       customer_name: nama.trim(),
@@ -273,9 +300,11 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
       items: orderItems,
       total,
     });
+    setMenyimpan(false);
+    if (gagal) return setError(gagal);
     setNama(''); setWa(''); setCatatan(''); setBayar(''); setItems([itemBaru()]); setError('');
     if (foto) URL.revokeObjectURL(foto);
-    setFoto(null); setSudahDibaca(false);
+    setFoto(null); setFotoFile(null); setSudahDibaca(false);
     setSukses(`Order ${nama.trim()} tersimpan (${rupiah(total)}).`);
   };
 
@@ -301,7 +330,7 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
             </button>
           </div>
         )}
-        {sudahDibaca && <p className="text-xs font-medium text-[#A35A08]">Terisi otomatis (hasil contoh). Cek item & jumlah di bawah sebelum simpan.</p>}
+        {sudahDibaca && <p className="text-xs font-medium text-[#A35A08]">Terisi otomatis dari foto. Cek item & jumlah di bawah sebelum simpan.</p>}
       </section>
 
       <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
@@ -389,8 +418,8 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
       <div className="sticky bottom-0 bg-[#FDFBF7] pt-2 pb-4 flex flex-col gap-2">
         {error && <p className="text-xs font-medium text-red-500">{error}</p>}
         {sukses && <p className="text-xs font-medium text-[#06402B]">{sukses}</p>}
-        <button type="button" onClick={simpan} className="w-full py-4 rounded-2xl text-sm font-bold bg-[#06402B] text-white shadow-md">
-          Simpan order · {rupiah(total)}
+        <button type="button" onClick={simpan} disabled={menyimpan} className="w-full disabled:opacity-60 py-4 rounded-2xl text-sm font-bold bg-[#06402B] text-white shadow-md">
+          {menyimpan ? 'Menyimpan...' : `Simpan order · ${rupiah(total)}`}
         </button>
       </div>
     </div>
@@ -404,18 +433,88 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'tambah', label: '+ Tambah' },
 ];
 
+function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const masuk = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    setBusy(true);
+    setError('');
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (err) setError('Email atau password salah.');
+  };
+
+  return (
+    <div className="min-h-[100dvh] flex items-center justify-center bg-[#FDFBF7] p-5">
+      <form onSubmit={masuk} className="w-full max-w-sm bg-white rounded-3xl border border-gray-200 p-6 shadow-md flex flex-col gap-4">
+        <div className="flex flex-col">
+          <span className="font-extrabold text-[#06402B] text-lg tracking-tight uppercase">AMINOTO</span>
+          <h1 className="text-sm font-semibold text-gray-500">Login Admin</h1>
+        </div>
+        <input id="admin-email" type="email" required autoComplete="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className={field} />
+        <input id="admin-password" type="password" required autoComplete="current-password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className={field} />
+        {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+        <button disabled={busy} className="w-full py-3 rounded-xl font-bold text-sm bg-[#06402B] text-white disabled:opacity-60">{busy ? 'Masuk...' : 'Masuk'}</button>
+      </form>
+    </div>
+  );
+}
+
 export function Admin() {
+  const [sesi, setSesi] = useState<boolean | null>(supabase ? null : true);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => setSesi(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setSesi(!!session));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  if (sesi === null) return <div className="min-h-[100dvh] bg-[#FDFBF7] p-5 text-sm text-gray-500">Memuat...</div>;
+  if (!sesi) return <Login />;
+  return <Dashboard />;
+}
+
+function Dashboard() {
   const [tab, setTab] = useState<Tab>('ringkasan');
   const [branch, setBranch] = useState('Semua');
   const [periode, setPeriode] = useState<Periode>('semua');
-  const [manual, setManual] = useState<MockOrder[]>([]);
+  const [data, setData] = useState<MockOrder[]>(supabase ? [] : MOCK_ORDERS);
+  const [memuat, setMemuat] = useState(!!supabase);
+  const [loadError, setLoadError] = useState('');
+
+  const muat = async () => {
+    if (!supabase) return;
+    setMemuat(true);
+    const { data: rows, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5000);
+    setLoadError(error ? `Gagal memuat order: ${error.message}` : '');
+    if (!error) setData((rows as MockOrder[]) ?? []);
+    setMemuat(false);
+  };
+  useEffect(() => { muat(); }, []);
+
+  const simpanOrder = async (o: MockOrder): Promise<string | null> => {
+    if (!supabase) { setData(prev => [o, ...prev]); return null; }
+    const { id: _id, created_at: _c, ...baris } = o;
+    const { error } = await supabase.from('orders').insert(baris);
+    if (error) return `Gagal menyimpan: ${error.message}`;
+    await muat();
+    return null;
+  };
+
+  const keluar = () => { supabase?.auth.signOut(); };
 
   const orders = useMemo(
-    () => [...manual, ...MOCK_ORDERS]
+    () => data
       .filter(o => branch === 'Semua' || o.branch === branch)
       .filter(o => dalamPeriode(o.created_at, periode))
       .sort((a, b) => (a.created_at < b.created_at ? 1 : -1)),
-    [manual, branch, periode],
+    [data, branch, periode],
   );
 
   return (
@@ -425,8 +524,14 @@ export function Admin() {
           <div className="flex justify-between items-end gap-3">
             <div className="flex flex-col">
               <span className="font-extrabold text-[#06402B] text-lg tracking-tight uppercase leading-none">AMINOTO</span>
-              <h1 className="text-sm font-semibold text-gray-500 mt-1">Admin · <span className="text-[#A35A08]">data contoh</span></h1>
+              <h1 className="text-sm font-semibold text-gray-500 mt-1">Admin{!supabase && <> · <span className="text-[#A35A08]">data contoh</span></>}</h1>
             </div>
+            {supabase && (
+              <div className="flex gap-2">
+                <button onClick={muat} className="px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 bg-white">{memuat ? 'Memuat...' : 'Muat ulang'}</button>
+                <button onClick={keluar} className="px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 bg-white">Keluar</button>
+              </div>
+            )}
           </div>
           <nav className="grid grid-cols-3 gap-1 bg-white border border-gray-200 rounded-2xl p-1" role="tablist" aria-label="Menu admin">
             {TABS.map(t => (
@@ -437,6 +542,8 @@ export function Admin() {
             ))}
           </nav>
         </header>
+
+        {loadError && <p className="text-sm text-red-500 font-medium">{loadError}</p>}
 
         {tab !== 'tambah' && (
           <div className="flex flex-col gap-2">
@@ -453,7 +560,7 @@ export function Admin() {
 
         {tab === 'ringkasan' && <Ringkasan orders={orders} />}
         {tab === 'order' && <DaftarOrder orders={orders} />}
-        {tab === 'tambah' && <TambahOrder onSave={o => setManual(prev => [o, ...prev])} />}
+        {tab === 'tambah' && <TambahOrder onSave={simpanOrder} />}
       </div>
     </div>
   );
