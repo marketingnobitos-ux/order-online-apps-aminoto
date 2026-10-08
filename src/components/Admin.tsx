@@ -74,7 +74,8 @@ function Login({ onDone }: { onDone: () => void }) {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-[#FDFBF7] p-5">
       <form onSubmit={submit} className="w-full max-w-sm bg-white rounded-3xl border border-gray-100 p-6 shadow-md flex flex-col gap-4">
-        <h1 className="text-xl font-bold text-gray-900">Login Admin Aminoto</h1>
+        <span className="font-extrabold text-[#06402B] text-lg tracking-tight uppercase">AMINOTO</span>
+        <h1 className="text-sm font-semibold text-gray-500">Login Admin</h1>
         <input
           type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
           className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm outline-none focus:border-[#06402B]"
@@ -125,8 +126,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   return (
     <div className="min-h-[100dvh] bg-[#FDFBF7] p-5 flex flex-col gap-6">
-      <header className="flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-900">Rekap Order Aminoto</h1>
+      <header className="flex justify-between items-center gap-3 flex-wrap">
+        <div className="flex flex-col">
+          <span className="font-extrabold text-[#06402B] text-lg tracking-tight uppercase">AMINOTO</span>
+          <h1 className="text-sm font-semibold text-gray-500">Rekap Order</h1>
+        </div>
         <div className="flex gap-2">
           <button onClick={load} className="px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 bg-white">Muat ulang</button>
           <button onClick={() => exportCsv(orders)} className="px-3 py-2 rounded-xl text-xs font-bold bg-[#D4FF00] text-[#06402B]">Export CSV</button>
