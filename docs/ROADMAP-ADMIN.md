@@ -28,7 +28,7 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ⏳ ADM-14 Keputusan kebijakan data pelanggan (nama, WA tersimpan di DB)
 
 ## Antrean
-- ⬜ ADM-15 Desain ulang tampilan admin (setelah UI data palsu disetujui)
+- ✅ ADM-15 Desain ulang admin: tab Ringkasan/Order/Tambah, filter periode + cabang, cari order, tanggal ramah, varian pakai tombol
 - ⬜ ADM-16 Isi env Supabase di VPS, build ulang, deploy (setelah ADM-11)
 - ⬜ ADM-17 Login admin (Supabase Auth) (setelah ADM-12, ADM-13)
 - ⬜ ADM-18 Ganti data palsu dengan query Supabase (setelah ADM-17)

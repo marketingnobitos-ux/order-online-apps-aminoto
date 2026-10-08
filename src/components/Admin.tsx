@@ -8,11 +8,40 @@ import { BRANCHES, MENU_ITEMS } from '../data';
 const PAYMENTS = ['QRIS', 'BCA', 'BAYAR DI TEMPAT'];
 const BAKAR_EXTRA = 2000; // sama dengan aturan di Menu.tsx
 
+// Aturan varian sama dengan Menu.tsx
+const COOK_ITEMS = ['gurame', 'nila', 'ayam negri', 'ayam kampung', 'bebek'];
+const CUT_ITEMS = ['ayam negri', 'ayam kampung', 'bebek'];
+const EGG_ITEM = 'telor dadar / ceplok';
+
 const rupiah = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
 
 // Tanggal dihitung di zona Asia/Jakarta (WIB), bukan zona perangkat.
 const dayKey = (iso: string) => new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
-const monthKey = (iso: string) => dayKey(iso).slice(0, 7);
+const tanggalRamah = (iso: string) =>
+  new Date(iso).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+const jam = (iso: string) =>
+  new Date(iso).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' });
+const bulanRamah = (key: string) =>
+  new Date(`${key}-01T00:00:00+07:00`).toLocaleDateString('id-ID', { month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' });
+
+type Periode = 'hari' | '7hari' | 'bulan' | 'semua';
+const PERIODE: { id: Periode; label: string }[] = [
+  { id: 'hari', label: 'Hari ini' },
+  { id: '7hari', label: '7 hari' },
+  { id: 'bulan', label: 'Bulan ini' },
+  { id: 'semua', label: 'Semua' },
+];
+
+function dalamPeriode(iso: string, p: Periode) {
+  if (p === 'semua') return true;
+  const today = dayKey(new Date().toISOString());
+  const d = dayKey(iso);
+  if (p === 'hari') return d === today;
+  if (p === 'bulan') return d.slice(0, 7) === today.slice(0, 7);
+  const batas = new Date(`${today}T00:00:00+07:00`);
+  batas.setDate(batas.getDate() - 6);
+  return new Date(`${d}T00:00:00+07:00`) >= batas;
+}
 
 function groupBy(orders: MockOrder[], keyFn: (o: MockOrder) => string) {
   const map = new Map<string, { count: number; omzet: number }>();
@@ -23,7 +52,7 @@ function groupBy(orders: MockOrder[], keyFn: (o: MockOrder) => string) {
     cur.omzet += o.total;
     map.set(k, cur);
   }
-  return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  return [...map.entries()];
 }
 
 function exportCsv(orders: MockOrder[]) {
@@ -31,13 +60,9 @@ function exportCsv(orders: MockOrder[]) {
   const header = ['Waktu (WIB)', 'Nama', 'WhatsApp', 'Cabang', 'Pembayaran', 'Item', 'Catatan', 'Total'];
   const rows = orders.map(o => [
     new Date(o.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
-    o.customer_name,
-    o.whatsapp,
-    o.branch,
-    o.payment_method,
+    o.customer_name, o.whatsapp, o.branch, o.payment_method,
     o.items.map(i => `${i.qty}x ${i.name}${i.variant ? ` (${i.variant})` : ''}`).join('; '),
-    o.note ?? '',
-    o.total,
+    o.note ?? '', o.total,
   ]);
   const csv = [header, ...rows].map(r => r.map(esc).join(',')).join('\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }); // BOM agar Excel baca UTF-8
@@ -48,64 +73,158 @@ function exportCsv(orders: MockOrder[]) {
   URL.revokeObjectURL(a.href);
 }
 
-function Summary({ title, rows }: { title: string; rows: [string, { count: number; omzet: number }][] }) {
+const chip = (aktif: boolean) =>
+  `shrink-0 px-3.5 py-2 rounded-xl text-[13px] font-bold border transition-all ${aktif ? 'bg-[#06402B] text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
+const pilihan = (aktif: boolean) =>
+  `flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${aktif ? 'border-[#06402B] bg-[#F4FBF4] text-[#06402B]' : 'border-gray-200 bg-white text-gray-600'}`;
+const field = 'w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-sm outline-none focus:border-[#06402B] focus:ring-1 focus:ring-[#06402B]';
+
+function Kartu({ label, nilai, hijau }: { label: string; nilai: string; hijau?: boolean }) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-base font-bold text-[#06402B]">{title}</h2>
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        {rows.length === 0 && <p className="p-4 text-sm text-gray-500">Belum ada data.</p>}
-        {rows.map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-3 px-4 py-3 border-b border-gray-100 last:border-0 text-sm">
-            <span className="font-semibold text-gray-800">{k}</span>
-            <span className="text-gray-600 text-right">
-              {v.count} order · <strong className="text-gray-900">{rupiah(v.omzet)}</strong>
-            </span>
+    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm min-w-0">
+      <p className="text-[11px] text-gray-500 font-semibold">{label}</p>
+      <p className={`text-xl font-bold mt-0.5 break-words ${hijau ? 'text-[#06402B]' : 'text-gray-900'}`}>{nilai}</p>
+    </div>
+  );
+}
+
+function Ringkasan({ orders }: { orders: MockOrder[] }) {
+  const omzet = orders.reduce((s, o) => s + o.total, 0);
+  const rata = orders.length ? Math.round(omzet / orders.length) : 0;
+  const perCabang = groupBy(orders, o => o.branch).sort((a, b) => b[1].omzet - a[1].omzet);
+  const perHari = groupBy(orders, o => dayKey(o.created_at)).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  const perBulan = groupBy(orders, o => dayKey(o.created_at).slice(0, 7)).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  const maxCabang = Math.max(1, ...perCabang.map(([, v]) => v.omzet));
+
+  return (
+    <div className="flex flex-col gap-5">
+      <section className="grid grid-cols-2 gap-3">
+        <Kartu label="Total order" nilai={String(orders.length)} />
+        <Kartu label="Omzet" nilai={rupiah(omzet)} hijau />
+        <Kartu label="Rata-rata per order" nilai={rupiah(rata)} />
+        <Kartu label="Cabang terlaris" nilai={perCabang[0]?.[0].replace('Aminoto ', '') ?? '-'} />
+      </section>
+
+      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+        <h2 className="text-sm font-bold text-[#06402B]">Per cabang</h2>
+        {perCabang.length === 0 && <p className="text-sm text-gray-500">Belum ada order di periode ini.</p>}
+        {perCabang.map(([nama, v]) => (
+          <div key={nama} className="flex flex-col gap-1.5">
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="font-semibold text-gray-800">{nama}</span>
+              <span className="text-gray-600">{v.count} order · <strong className="text-gray-900">{rupiah(v.omzet)}</strong></span>
+            </div>
+            <div className="h-2 rounded-full bg-[#F4FBF4] overflow-hidden">
+              <div className="h-full bg-[#06402B] rounded-full" style={{ width: `${(v.omzet / maxCabang) * 100}%` }} />
+            </div>
           </div>
         ))}
-      </div>
+      </section>
+
+      <Rekap title="Per hari" rows={perHari} label={tanggalRamah} />
+      <Rekap title="Per bulan" rows={perBulan} label={bulanRamah} />
+    </div>
+  );
+}
+
+function Rekap({ title, rows, label }: { title: string; rows: [string, { count: number; omzet: number }][]; label: (k: string) => string }) {
+  return (
+    <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <h2 className="text-sm font-bold text-[#06402B] px-4 pt-4 pb-2">{title}</h2>
+      {rows.length === 0 && <p className="px-4 pb-4 text-sm text-gray-500">Belum ada data.</p>}
+      {rows.map(([k, v]) => (
+        <div key={k} className="flex justify-between gap-3 px-4 py-3 border-t border-gray-100 text-sm">
+          <span className="font-semibold text-gray-800 capitalize">{label(k.length === 7 ? k : `${k}T12:00:00+07:00`)}</span>
+          <span className="text-gray-600 text-right shrink-0">{v.count} order · <strong className="text-gray-900">{rupiah(v.omzet)}</strong></span>
+        </div>
+      ))}
     </section>
   );
 }
 
-type DraftItem = { menuId: string; qty: number; variant: string };
+function DaftarOrder({ orders }: { orders: MockOrder[] }) {
+  const [cari, setCari] = useState('');
+  const q = cari.trim().toLowerCase();
+  const hasil = q ? orders.filter(o => o.customer_name.toLowerCase().includes(q) || o.whatsapp.includes(q.replace(/\D/g, '') || q)) : orders;
 
-function TambahOrder({ onSave, onCancel }: { onSave: (o: MockOrder) => void; onCancel: () => void }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex gap-2">
+        <input className={field} value={cari} onChange={e => setCari(e.target.value)} placeholder="Cari nama atau nomor WA..." aria-label="Cari order" />
+        <button onClick={() => exportCsv(hasil)} className="shrink-0 px-3 rounded-xl text-xs font-bold bg-[#D4FF00] text-[#06402B]">Export CSV</button>
+      </div>
+      <p className="text-xs text-gray-500">{hasil.length} order</p>
+      {hasil.map(o => (
+        <details key={o.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm open:border-[#06402B]">
+          <summary className="list-none cursor-pointer p-4 flex flex-col gap-1">
+            <div className="flex justify-between gap-3 text-xs text-gray-500">
+              <span className="capitalize">{tanggalRamah(o.created_at)} · {jam(o.created_at)}</span>
+              <span className="shrink-0">{o.branch.replace('Aminoto ', '')}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="font-bold text-sm text-gray-900 capitalize">{o.customer_name}</span>
+              <span className="font-bold text-sm text-[#06402B] shrink-0">{rupiah(o.total)}</span>
+            </div>
+            <span className="text-xs text-gray-500 truncate">{o.items.map(i => `${i.qty}x ${i.name}`).join(', ')}</span>
+          </summary>
+          <div className="px-4 pb-4 flex flex-col gap-2 text-xs text-gray-700 border-t border-dashed border-gray-200 pt-3">
+            {o.items.map((i, idx) => (
+              <div key={idx} className="flex justify-between gap-3">
+                <span>{i.qty}x {i.name}{i.variant ? ` (${i.variant})` : ''}</span>
+                <span className="tabular-nums shrink-0">{rupiah(i.price * i.qty)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between"><span className="text-gray-500">WhatsApp</span><span>{o.whatsapp}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Pembayaran</span><span>{o.payment_method}</span></div>
+            {o.note && <p className="italic text-gray-500">Catatan: {o.note}</p>}
+          </div>
+        </details>
+      ))}
+      {hasil.length === 0 && <p className="text-sm text-gray-500 text-center py-8">Tidak ada order yang cocok.</p>}
+    </div>
+  );
+}
+
+type DraftItem = { menuId: string; qty: number; cook: string; cut: string; egg: string };
+const itemBaru = (): DraftItem => ({ menuId: MENU_ITEMS[0].id, qty: 1, cook: '', cut: '', egg: '' });
+
+function infoItem(it: DraftItem) {
+  const menu = MENU_ITEMS.find(m => m.id === it.menuId)!;
+  const n = menu.name.toLowerCase();
+  const butuhMasak = COOK_ITEMS.includes(n);
+  const butuhPotong = CUT_ITEMS.includes(n);
+  const butuhTelor = n === EGG_ITEM;
+  const harga = menu.price + (butuhMasak && it.cook === 'Bakar' ? BAKAR_EXTRA : 0);
+  const varian = butuhTelor ? it.egg : [butuhMasak ? it.cook : '', butuhPotong ? it.cut : ''].filter(Boolean).join(', ');
+  const lengkap = (!butuhMasak || !!it.cook) && (!butuhPotong || !!it.cut) && (!butuhTelor || !!it.egg);
+  return { menu, butuhMasak, butuhPotong, butuhTelor, harga, varian, lengkap };
+}
+
+function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
   const [nama, setNama] = useState('');
   const [wa, setWa] = useState('');
   const [cabang, setCabang] = useState(BRANCHES[0].name);
   const [bayar, setBayar] = useState(PAYMENTS[0]);
   const [catatan, setCatatan] = useState('');
-  const [items, setItems] = useState<DraftItem[]>([{ menuId: MENU_ITEMS[0].id, qty: 1, variant: '' }]);
+  const [items, setItems] = useState<DraftItem[]>([itemBaru()]);
   const [error, setError] = useState('');
+  const [sukses, setSukses] = useState('');
 
   const setItem = (idx: number, patch: Partial<DraftItem>) =>
     setItems(prev => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
-
-  const hitung = (it: DraftItem) => {
-    const menu = MENU_ITEMS.find(m => m.id === it.menuId);
-    if (!menu) return 0;
-    const extra = /bakar/i.test(it.variant) ? BAKAR_EXTRA : 0;
-    return (menu.price + extra) * it.qty;
-  };
-  const total = items.reduce((s, it) => s + hitung(it), 0);
+  const total = items.reduce((s, it) => s + infoItem(it).harga * it.qty, 0);
 
   const simpan = () => {
-    if (!nama.trim()) return setError('Nama wajib diisi.');
-    if (!/^[0-9+]{9,15}$/.test(wa.replace(/[\s-]/g, ''))) return setError('Nomor WhatsApp tidak valid.');
-    if (items.some(it => it.qty < 1)) return setError('Jumlah minimal 1.');
+    setSukses('');
+    if (!nama.trim()) return setError('Nama pemesan wajib diisi.');
+    if (!/^\+?[0-9]{9,15}$/.test(wa.replace(/[\s-]/g, ''))) return setError('Nomor WhatsApp tidak valid. Contoh: 081234567890');
+    const kurang = items.findIndex(it => !infoItem(it).lengkap);
+    if (kurang >= 0) return setError(`Item ke-${kurang + 1}: pilih varian dulu.`);
 
     const orderItems: MockOrderItem[] = items.map(it => {
-      const menu = MENU_ITEMS.find(m => m.id === it.menuId)!;
-      const extra = /bakar/i.test(it.variant) ? BAKAR_EXTRA : 0;
-      return {
-        id: menu.id,
-        name: menu.name,
-        variant: it.variant.trim() || null,
-        qty: it.qty,
-        price: menu.price + extra,
-      };
+      const info = infoItem(it);
+      return { id: info.menu.id, name: info.menu.name, variant: info.varian || null, qty: it.qty, price: info.harga };
     });
-
     onSave({
       id: `input-${Date.now()}`,
       created_at: new Date().toISOString(),
@@ -117,169 +236,163 @@ function TambahOrder({ onSave, onCancel }: { onSave: (o: MockOrder) => void; onC
       items: orderItems,
       total,
     });
+    setNama(''); setWa(''); setCatatan(''); setItems([itemBaru()]); setError('');
+    setSukses(`Order ${nama.trim()} tersimpan (${rupiah(total)}).`);
   };
 
-  const field = 'w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-sm outline-none focus:border-[#06402B]';
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-base font-bold text-[#06402B]">Tambah order manual</h2>
-        <button onClick={onCancel} className="text-xs font-bold text-gray-500">Batal</button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Nama pemesan
-          <input className={field} value={nama} onChange={e => setNama(e.target.value)} placeholder="Nama" />
+    <div className="flex flex-col gap-4">
+      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+        <h2 className="text-sm font-bold text-[#06402B]">Data pemesan</h2>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Nama pemesan <span className="sr-only">wajib</span>
+          <input className={field} value={nama} onChange={e => setNama(e.target.value)} placeholder="Nama lengkap" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Nomor WhatsApp
-          <input className={field} type="tel" value={wa} onChange={e => setWa(e.target.value)} placeholder="081234567890" />
+          <input className={field} type="tel" inputMode="tel" value={wa} onChange={e => setWa(e.target.value)} placeholder="081234567890" />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Cabang
-          <select className={field} value={cabang} onChange={e => setCabang(e.target.value)}>
-            {BRANCHES.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Pembayaran
-          <select className={field} value={bayar} onChange={e => setBayar(e.target.value)}>
-            {PAYMENTS.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-        </label>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold text-gray-700">Item</span>
-        {items.map((it, idx) => (
-          <div key={idx} className="grid grid-cols-[minmax(0,1fr)_64px] sm:grid-cols-[minmax(0,1.4fr)_64px_minmax(0,1fr)_auto] gap-2 items-center">
-            <select className={field} value={it.menuId} onChange={e => setItem(idx, { menuId: e.target.value })}>
-              {['Makanan', 'Minuman'].map(kat => (
-                <optgroup key={kat} label={kat}>
-                  {MENU_ITEMS.filter(m => m.category === kat).map(m => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            <input className={field} type="number" min={1} value={it.qty} onChange={e => setItem(idx, { qty: Math.max(1, Number(e.target.value) || 1) })} aria-label="Jumlah" />
-            <input className={`${field} col-span-2 sm:col-span-1`} value={it.variant} onChange={e => setItem(idx, { variant: e.target.value })} placeholder="Varian, mis. Bakar, Paha" aria-label="Varian" />
-            {items.length > 1 && (
-              <button onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} className="text-xs font-bold text-red-500 justify-self-end">Hapus</button>
-            )}
+        <div className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Cabang
+          <div className="flex gap-2 flex-wrap">
+            {BRANCHES.map(b => (
+              <button key={b.id} type="button" onClick={() => setCabang(b.name)} className={chip(cabang === b.name)}>{b.name.replace('Aminoto ', '')}</button>
+            ))}
           </div>
-        ))}
-        <button onClick={() => setItems(prev => [...prev, { menuId: MENU_ITEMS[0].id, qty: 1, variant: '' }])} className="self-start text-xs font-bold text-[#06402B]">+ Tambah item</button>
-      </div>
+        </div>
+        <div className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Pembayaran
+          <div className="flex gap-2 flex-wrap">
+            {PAYMENTS.map(p => (
+              <button key={p} type="button" onClick={() => setBayar(p)} className={chip(bayar === p)}>{p === 'BAYAR DI TEMPAT' ? 'Bayar di tempat' : p}</button>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Catatan (opsional)
-        <input className={field} value={catatan} onChange={e => setCatatan(e.target.value)} placeholder="mis. sambal pisah" />
-      </label>
+      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+        <h2 className="text-sm font-bold text-[#06402B]">Pesanan</h2>
+        {items.map((it, idx) => {
+          const info = infoItem(it);
+          return (
+            <div key={idx} className="flex flex-col gap-2 border border-gray-100 rounded-xl p-3">
+              <div className="flex gap-2 items-center">
+                <select className={field} value={it.menuId} onChange={e => setItem(idx, { menuId: e.target.value, cook: '', cut: '', egg: '' })} aria-label={`Menu item ${idx + 1}`}>
+                  {['Makanan', 'Minuman'].map(kat => (
+                    <optgroup key={kat} label={kat}>
+                      {MENU_ITEMS.filter(m => m.category === kat).map(m => (
+                        <option key={m.id} value={m.id}>{m.name} — {rupiah(m.price)}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <div className="flex items-center gap-1 bg-gray-50 rounded-xl p-1 border border-gray-100 shrink-0">
+                  <button type="button" onClick={() => setItem(idx, { qty: Math.max(1, it.qty - 1) })} className="w-8 h-8 rounded-lg bg-white border border-gray-200 font-bold" aria-label="Kurangi">−</button>
+                  <span className="w-6 text-center font-bold text-sm">{it.qty}</span>
+                  <button type="button" onClick={() => setItem(idx, { qty: it.qty + 1 })} className="w-8 h-8 rounded-lg bg-white border border-gray-200 font-bold" aria-label="Tambah">+</button>
+                </div>
+              </div>
+              {info.butuhMasak && (
+                <div className="flex gap-2">
+                  {['Goreng', 'Bakar'].map(c => (
+                    <button key={c} type="button" onClick={() => setItem(idx, { cook: c })} className={pilihan(it.cook === c)}>{c}{c === 'Bakar' ? ' +2rb' : ''}</button>
+                  ))}
+                </div>
+              )}
+              {info.butuhPotong && (
+                <div className="flex gap-2">
+                  {['Paha', 'Dada'].map(c => (
+                    <button key={c} type="button" onClick={() => setItem(idx, { cut: c })} className={pilihan(it.cut === c)}>{c}</button>
+                  ))}
+                </div>
+              )}
+              {info.butuhTelor && (
+                <div className="flex gap-2">
+                  {['Dadar', 'Ceplok'].map(c => (
+                    <button key={c} type="button" onClick={() => setItem(idx, { egg: c })} className={pilihan(it.egg === c)}>{c}</button>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-gray-500">Subtotal <strong className="text-gray-900">{rupiah(info.harga * it.qty)}</strong></span>
+                {items.length > 1 && (
+                  <button type="button" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} className="font-bold text-red-500">Hapus</button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        <button type="button" onClick={() => setItems(prev => [...prev, itemBaru()])} className="py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-bold text-[#06402B]">+ Tambah item</button>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Catatan (opsional)
+          <input className={field} value={catatan} onChange={e => setCatatan(e.target.value)} placeholder="mis. sambal pisah" />
+        </label>
+      </section>
 
-      <div className="flex justify-between items-center gap-3 flex-wrap border-t border-gray-100 pt-3">
-        <span className="text-sm text-gray-600">Total <strong className="text-gray-900">{rupiah(total)}</strong></span>
-        <button onClick={simpan} className="px-4 py-2.5 rounded-xl text-sm font-bold bg-[#06402B] text-white">Simpan order</button>
+      <div className="sticky bottom-0 bg-[#FDFBF7] pt-2 pb-4 flex flex-col gap-2">
+        {error && <p className="text-xs font-medium text-red-500">{error}</p>}
+        {sukses && <p className="text-xs font-medium text-[#06402B]">{sukses}</p>}
+        <button type="button" onClick={simpan} className="w-full py-4 rounded-2xl text-sm font-bold bg-[#06402B] text-white shadow-md">
+          Simpan order · {rupiah(total)}
+        </button>
       </div>
-      {error && <p className="text-xs font-medium text-red-500">{error}</p>}
     </div>
   );
 }
 
-export function Admin() {
-  const [branch, setBranch] = useState<string>('Semua');
-  const [reloadKey, setReloadKey] = useState(0); // tombol Muat ulang (nanti memanggil Supabase)
-  const [manual, setManual] = useState<MockOrder[]>([]);
-  const [showForm, setShowForm] = useState(false);
+type Tab = 'ringkasan' | 'order' | 'tambah';
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'ringkasan', label: 'Ringkasan' },
+  { id: 'order', label: 'Order' },
+  { id: 'tambah', label: '+ Tambah' },
+];
 
-  const allOrders = useMemo(() => [...manual, ...MOCK_ORDERS], [manual]);
+export function Admin() {
+  const [tab, setTab] = useState<Tab>('ringkasan');
+  const [branch, setBranch] = useState('Semua');
+  const [periode, setPeriode] = useState<Periode>('semua');
+  const [manual, setManual] = useState<MockOrder[]>([]);
 
   const orders = useMemo(
-    () => (branch === 'Semua' ? allOrders : allOrders.filter(o => o.branch === branch)),
-    [allOrders, branch, reloadKey],
+    () => [...manual, ...MOCK_ORDERS]
+      .filter(o => branch === 'Semua' || o.branch === branch)
+      .filter(o => dalamPeriode(o.created_at, periode))
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1)),
+    [manual, branch, periode],
   );
 
-  const totalOmzet = useMemo(() => orders.reduce((s, o) => s + o.total, 0), [orders]);
-  const perDay = useMemo(() => groupBy(orders, o => dayKey(o.created_at)), [orders]);
-  const perMonth = useMemo(() => groupBy(orders, o => monthKey(o.created_at)), [orders]);
-  const perBranch = useMemo(() => groupBy(allOrders, o => o.branch), [allOrders]);
-
   return (
-    <div className="min-h-[100dvh] bg-[#FDFBF7] p-5 flex flex-col gap-6">
-      <header className="flex justify-between items-center gap-3 flex-wrap">
-        <div className="flex flex-col">
-          <span className="font-extrabold text-[#06402B] text-lg tracking-tight uppercase">AMINOTO</span>
-          <h1 className="text-sm font-semibold text-gray-500">Rekap Order · <span className="text-[#A35A08]">data contoh</span></h1>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setShowForm(s => !s)} className="px-3 py-2 rounded-xl text-xs font-bold bg-[#06402B] text-white">+ Tambah Order</button>
-          <button onClick={() => setReloadKey(k => k + 1)} className="px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 bg-white">Muat ulang</button>
-          <button onClick={() => exportCsv(orders)} className="px-3 py-2 rounded-xl text-xs font-bold bg-[#D4FF00] text-[#06402B]">Export CSV</button>
-        </div>
-      </header>
-
-      {showForm && (
-        <TambahOrder
-          onSave={o => { setManual(prev => [o, ...prev]); setShowForm(false); }}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
-
-      <div className="flex gap-2 overflow-x-auto hide-scrollbar" role="tablist" aria-label="Filter cabang">
-        {['Semua', ...BRANCHES.map(b => b.name)].map(name => (
-          <button
-            key={name}
-            role="tab"
-            aria-selected={branch === name}
-            onClick={() => setBranch(name)}
-            className={`shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold border transition-all ${branch === name ? 'bg-[#06402B] text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'}`}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
-
-      <section className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-          <p className="text-[11px] text-gray-500 font-semibold">Total order</p>
-          <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
-        </div>
-        <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-          <p className="text-[11px] text-gray-500 font-semibold">Total omzet</p>
-          <p className="text-2xl font-bold text-[#06402B]">{rupiah(totalOmzet)}</p>
-        </div>
-      </section>
-
-      <Summary title="Per bulan" rows={perMonth} />
-      <Summary title="Per hari" rows={perDay} />
-      <Summary title="Per cabang (semua)" rows={perBranch} />
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-base font-bold text-[#06402B]">Daftar order</h2>
-        {orders.map(o => (
-          <details key={o.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-            <summary className="list-none cursor-pointer p-4 flex flex-col gap-1">
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>{new Date(o.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</span>
-                <span>{o.branch}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="font-bold text-sm text-gray-900 capitalize">{o.customer_name}</span>
-                <span className="font-bold text-sm text-gray-900">{rupiah(o.total)}</span>
-              </div>
-            </summary>
-            <div className="px-4 pb-4 flex flex-col gap-2 text-xs text-gray-700 border-t border-dashed border-gray-200 pt-3">
-              {o.items.map((i, idx) => (
-                <div key={idx} className="flex justify-between gap-3">
-                  <span>{i.qty}x {i.name}{i.variant ? ` (${i.variant})` : ''}</span>
-                  <span className="tabular-nums">{rupiah(i.price * i.qty)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between"><span className="text-gray-500">WhatsApp</span><span>{o.whatsapp}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Pembayaran</span><span>{o.payment_method}</span></div>
-              {o.note && <p className="italic text-gray-500">Catatan: {o.note}</p>}
+    <div className="min-h-[100dvh] bg-[#FDFBF7]">
+      <div className="max-w-2xl mx-auto px-5 pb-10 flex flex-col gap-4">
+        <header className="sticky top-0 z-10 bg-[#FDFBF7] pt-5 pb-3 flex flex-col gap-3 border-b border-gray-100">
+          <div className="flex justify-between items-end gap-3">
+            <div className="flex flex-col">
+              <span className="font-extrabold text-[#06402B] text-lg tracking-tight uppercase leading-none">AMINOTO</span>
+              <h1 className="text-sm font-semibold text-gray-500 mt-1">Admin · <span className="text-[#A35A08]">data contoh</span></h1>
             </div>
-          </details>
-        ))}
-        {orders.length === 0 && <p className="text-sm text-gray-500">Belum ada order.</p>}
-      </section>
+          </div>
+          <nav className="grid grid-cols-3 gap-1 bg-white border border-gray-200 rounded-2xl p-1" role="tablist" aria-label="Menu admin">
+            {TABS.map(t => (
+              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+                className={`py-2.5 rounded-xl text-sm font-bold transition-all ${tab === t.id ? 'bg-[#06402B] text-white' : 'text-gray-600'}`}>
+                {t.label}
+              </button>
+            ))}
+          </nav>
+        </header>
+
+        {tab !== 'tambah' && (
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar" aria-label="Filter periode">
+              {PERIODE.map(p => <button key={p.id} onClick={() => setPeriode(p.id)} className={chip(periode === p.id)}>{p.label}</button>)}
+            </div>
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar" aria-label="Filter cabang">
+              {['Semua', ...BRANCHES.map(b => b.name)].map(n => (
+                <button key={n} onClick={() => setBranch(n)} className={chip(branch === n)}>{n === 'Semua' ? 'Semua cabang' : n.replace('Aminoto ', '')}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'ringkasan' && <Ringkasan orders={orders} />}
+        {tab === 'order' && <DaftarOrder orders={orders} />}
+        {tab === 'tambah' && <TambahOrder onSave={o => setManual(prev => [o, ...prev])} />}
+      </div>
     </div>
   );
 }
