@@ -26,6 +26,7 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ⏳ ADM-12 Jalankan `supabase/schema.sql` di SQL Editor
 - ⏳ ADM-13 Buat akun admin di Supabase Auth
 - ⏳ ADM-14 Keputusan kebijakan data pelanggan (nama, WA tersimpan di DB)
+- ⏳ ADM-28 Masukkan API key Gemini Pro ke Supabase Edge Function secrets (jangan kirim key ke chat)
 
 ## Antrean
 - ✅ ADM-15 Desain ulang admin: tab Ringkasan/Order/Tambah, filter periode + cabang, cari order, tanggal ramah, varian pakai tombol
@@ -39,6 +40,12 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ⬜ ADM-23 Rekap manual dan rekap app jalan paralel 1 bulan
 - ⬜ ADM-24 Akun admin tambahan (opsional)
 - ⬜ ADM-25 Backup tabel `orders` berkala
+- ✅ ADM-26 UI input order dari foto: foto kamera/galeri → Baca foto → item, qty, catatan terisi (hasil contoh). Wajib: cabang, nama, WA, bayar, catatan
+- ⬜ ADM-27 Edge Function Gemini Pro: baca foto nota/kasir jadi item + qty + catatan (setelah ADM-11, ADM-28)
+
+## Keputusan
+- Baca foto pakai Gemini Pro (berbayar, data tidak dipakai Google). Key hanya di backend.
+- Aturan CLAUDE.md "tidak memakai AI" perlu dicabut khusus admin saat ADM-27.
 
 ## Riwayat penting
 - Commit admin awal: `2a6cf17` (Supabase + /admin), `3cc80b9` (header AMINOTO), `a0bc012` (UI data palsu), `faf1518` (tombol tambah order).

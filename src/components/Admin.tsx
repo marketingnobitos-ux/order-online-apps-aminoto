@@ -200,11 +200,26 @@ function infoItem(it: DraftItem) {
   return { menu, butuhMasak, butuhPotong, butuhTelor, harga, varian, lengkap };
 }
 
+// CONTOH hasil baca foto. Nanti diganti respons Edge Function Gemini (ADM-27).
+const CONTOH_HASIL_FOTO: { items: DraftItem[]; catatan: string } = {
+  items: [
+    { menuId: 'm6', qty: 1, cook: 'Goreng', cut: '', egg: '' },
+    { menuId: 'm5', qty: 1, cook: 'Goreng', cut: '', egg: '' },
+    { menuId: 'm12', qty: 2, cook: '', cut: '', egg: '' },
+    { menuId: 'm13', qty: 2, cook: '', cut: '', egg: '' },
+    { menuId: 'd3', qty: 2, cook: '', cut: '', egg: '' },
+  ],
+  catatan: 'Ikan ya renyah tapi jangan terlalu kering',
+};
+
 function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
+  const [foto, setFoto] = useState<string | null>(null);
+  const [membaca, setMembaca] = useState(false);
+  const [sudahDibaca, setSudahDibaca] = useState(false);
   const [nama, setNama] = useState('');
   const [wa, setWa] = useState('');
   const [cabang, setCabang] = useState(BRANCHES[0].name);
-  const [bayar, setBayar] = useState(PAYMENTS[0]);
+  const [bayar, setBayar] = useState('');
   const [catatan, setCatatan] = useState('');
   const [items, setItems] = useState<DraftItem[]>([itemBaru()]);
   const [error, setError] = useState('');
@@ -214,10 +229,32 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
     setItems(prev => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   const total = items.reduce((s, it) => s + infoItem(it).harga * it.qty, 0);
 
+  const pilihFoto = (file: File | undefined) => {
+    if (!file) return;
+    if (foto) URL.revokeObjectURL(foto);
+    setFoto(URL.createObjectURL(file));
+    setSudahDibaca(false);
+    setSukses('');
+  };
+
+  const bacaFoto = () => {
+    setMembaca(true);
+    setError('');
+    // Simulasi. Nanti: kirim foto ke Edge Function Gemini, isi dari hasilnya.
+    setTimeout(() => {
+      setItems(CONTOH_HASIL_FOTO.items.map(it => ({ ...it })));
+      setCatatan(CONTOH_HASIL_FOTO.catatan);
+      setMembaca(false);
+      setSudahDibaca(true);
+    }, 900);
+  };
+
   const simpan = () => {
     setSukses('');
     if (!nama.trim()) return setError('Nama pemesan wajib diisi.');
     if (!/^\+?[0-9]{9,15}$/.test(wa.replace(/[\s-]/g, ''))) return setError('Nomor WhatsApp tidak valid. Contoh: 081234567890');
+    if (!bayar) return setError('Pilih metode pembayaran.');
+    if (!catatan.trim()) return setError('Catatan wajib diisi. Tulis "-" kalau tidak ada.');
     const kurang = items.findIndex(it => !infoItem(it).lengkap);
     if (kurang >= 0) return setError(`Item ke-${kurang + 1}: pilih varian dulu.`);
 
@@ -236,12 +273,37 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
       items: orderItems,
       total,
     });
-    setNama(''); setWa(''); setCatatan(''); setItems([itemBaru()]); setError('');
+    setNama(''); setWa(''); setCatatan(''); setBayar(''); setItems([itemBaru()]); setError('');
+    if (foto) URL.revokeObjectURL(foto);
+    setFoto(null); setSudahDibaca(false);
     setSukses(`Order ${nama.trim()} tersimpan (${rupiah(total)}).`);
   };
 
   return (
     <div className="flex flex-col gap-4">
+      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+        <h2 className="text-sm font-bold text-[#06402B]">Foto pesanan</h2>
+        <p className="text-xs text-gray-500">Foto layar kasir atau nota. Item, jumlah, dan catatan diisi otomatis, lalu cek dulu.</p>
+        {foto ? (
+          <img src={foto} alt="Foto pesanan" className="w-full max-h-72 object-contain rounded-xl border border-gray-100 bg-gray-50" />
+        ) : (
+          <label htmlFor="foto-pesanan" className="flex flex-col items-center justify-center gap-1 py-8 rounded-xl border-2 border-dashed border-gray-300 text-sm font-bold text-[#06402B] cursor-pointer">
+            Ambil / pilih foto
+            <span className="text-xs font-medium text-gray-500">Kamera atau galeri</span>
+          </label>
+        )}
+        <input id="foto-pesanan" type="file" accept="image/*" className="sr-only" onChange={e => { pilihFoto(e.target.files?.[0]); e.target.value = ''; }} />
+        {foto && (
+          <div className="flex gap-2">
+            <label htmlFor="foto-pesanan" className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 text-center cursor-pointer">Ganti foto</label>
+            <button type="button" onClick={bacaFoto} disabled={membaca} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#D4FF00] text-[#06402B] disabled:opacity-60">
+              {membaca ? 'Membaca...' : sudahDibaca ? 'Baca ulang' : 'Baca foto'}
+            </button>
+          </div>
+        )}
+        {sudahDibaca && <p className="text-xs font-medium text-[#A35A08]">Terisi otomatis (hasil contoh). Cek item & jumlah di bawah sebelum simpan.</p>}
+      </section>
+
       <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
         <h2 className="text-sm font-bold text-[#06402B]">Data pemesan</h2>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Nama pemesan <span className="sr-only">wajib</span>
@@ -319,7 +381,7 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => void }) {
           );
         })}
         <button type="button" onClick={() => setItems(prev => [...prev, itemBaru()])} className="py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-bold text-[#06402B]">+ Tambah item</button>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Catatan (opsional)
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Catatan
           <input className={field} value={catatan} onChange={e => setCatatan(e.target.value)} placeholder="mis. sambal pisah" />
         </label>
       </section>
