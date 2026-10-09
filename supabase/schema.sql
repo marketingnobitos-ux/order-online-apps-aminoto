@@ -14,11 +14,14 @@ create table if not exists public.orders (
 
 alter table public.orders enable row level security;
 
--- Customer (anon) hanya boleh INSERT order.
+-- ADM-10 dimatikan: customer (anon) TIDAK boleh insert. Order hanya diinput admin.
 drop policy if exists "anon insert orders" on public.orders;
-create policy "anon insert orders"
+
+-- Hanya admin yang sudah login (authenticated) boleh input order.
+drop policy if exists "admin insert orders" on public.orders;
+create policy "admin insert orders"
   on public.orders for insert
-  to anon
+  to authenticated
   with check (true);
 
 -- Hanya admin yang sudah login (authenticated) boleh membaca order.

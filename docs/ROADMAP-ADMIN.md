@@ -20,8 +20,8 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ✅ ADM-08 UI admin dengan data palsu: filter cabang, ringkasan, rekap bulan/hari/cabang, daftar order, export CSV (`/admin`)
 - ✅ ADM-09 Tombol + Tambah Order (form input admin, data disimpan di memori sampai refresh)
 - ✅ ADM-11 Project Supabase `aminoto-order` (ref `arppizmnunkoiwvsakbp`, Singapore, gratis) dibuat via MCP
-- ✅ ADM-12 Tabel `orders` + RLS (anon insert, admin insert & read). Advisor keamanan 0 temuan
-- ✅ ADM-10 Order pelanggan tersimpan ke Supabase saat kirim WA (live, gagal simpan tidak ganggu WA)
+- ✅ ADM-12 Tabel `orders` + RLS (admin insert & read). Advisor keamanan 0 temuan
+- ❌ ADM-10 DIMATIKAN (2026-10-09): order pelanggan tidak lagi disimpan ke Supabase. Insert di `Review.tsx` dihapus, policy `anon insert orders` di-drop. Order hanya masuk lewat input admin
 - ✅ ADM-13 Akun admin dibuat di Supabase Auth (1 akun, terkonfirmasi)
 - ✅ ADM-16 Env Supabase ikut build VPS (`deploy.sh` export `deploy.env`), live
 - ✅ ADM-17 Login admin email + password (Supabase Auth), live
