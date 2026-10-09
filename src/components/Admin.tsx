@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { MOCK_ORDERS, MockOrder, MockOrderItem } from '../lib/mock-orders';
 import { BRANCHES, MENU_ITEMS } from '../data';
 import { supabase } from '../lib/supabase';
-import { LayoutDashboard, ClipboardList, RefreshCw, LogOut, Menu, X, ShoppingBag, Wallet, Receipt, Store, CalendarDays, ChevronDown, LucideIcon } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, RefreshCw, LogOut, Menu, X, ShoppingBag, Wallet, Receipt, Store, CalendarDays, ChevronDown, Check, LucideIcon } from 'lucide-react';
 
 // Data order dari Supabase (tabel orders). Kalau env Supabase belum diset, pakai data contoh
 // (mock-orders.ts) supaya UI tetap bisa dicoba lokal.
@@ -313,6 +313,24 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
   const [items, setItems] = useState<DraftItem[]>([itemBaru()]);
   const [error, setError] = useState('');
   const [sukses, setSukses] = useState('');
+  const [langkah, setLangkah] = useState(1);
+
+  const pindah = (n: number) => { setError(''); setLangkah(n); };
+  const cekDataPemesan = () => {
+    if (!nama.trim()) return 'Nama pemesan wajib diisi.';
+    if (!/^\+?[0-9]{9,15}$/.test(wa.replace(/[\s-]/g, ''))) return 'Nomor WhatsApp tidak valid. Contoh: 081234567890';
+    if (!bayar) return 'Pilih metode pembayaran.';
+    return '';
+  };
+  const cekPesanan = () => {
+    const kurang = items.findIndex(it => !infoItem(it).lengkap);
+    return kurang >= 0 ? `Item ke-${kurang + 1}: pilih varian dulu.` : '';
+  };
+  const lanjut = () => {
+    const pesan = langkah === 2 ? cekDataPemesan() : langkah === 3 ? cekPesanan() : '';
+    if (pesan) return setError(pesan);
+    pindah(langkah + 1);
+  };
 
   const setItem = (idx: number, patch: Partial<DraftItem>) =>
     setItems(prev => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -357,6 +375,7 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
       if (data.note) setCatatan(String(data.note));
       if (data.customer && !nama.trim()) setNama(String(data.customer));
       setSudahDibaca(true);
+      if (cocok.length) setLangkah(2);
       if (tidakCocok.length) setError(`Tidak ada di menu, tambahkan manual: ${tidakCocok.join(', ')}`);
       else if (!cocok.length) setError('Tidak ada item terbaca. Coba foto lebih jelas atau isi manual.');
     } catch (e) {
@@ -368,12 +387,8 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
 
   const simpan = async () => {
     setSukses('');
-    if (!nama.trim()) return setError('Nama pemesan wajib diisi.');
-    if (!/^\+?[0-9]{9,15}$/.test(wa.replace(/[\s-]/g, ''))) return setError('Nomor WhatsApp tidak valid. Contoh: 081234567890');
-    if (!bayar) return setError('Pilih metode pembayaran.');
-    if (!catatan.trim()) return setError('Catatan wajib diisi. Tulis "-" kalau tidak ada.');
-    const kurang = items.findIndex(it => !infoItem(it).lengkap);
-    if (kurang >= 0) return setError(`Item ke-${kurang + 1}: pilih varian dulu.`);
+    const pesan = cekDataPemesan() || cekPesanan();
+    if (pesan) return setError(pesan);
 
     const orderItems: MockOrderItem[] = items.map(it => {
       const info = infoItem(it);
@@ -393,15 +408,47 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
     });
     setMenyimpan(false);
     if (gagal) return setError(gagal);
-    setNama(''); setWa(''); setCatatan(''); setBayar(''); setItems([itemBaru()]); setError('');
-    if (foto) URL.revokeObjectURL(foto);
-    setFoto(null); setFotoFile(null); setSudahDibaca(false);
     setSukses(`Order ${nama.trim()} tersimpan (${rupiah(total)}).`);
   };
 
+  const inputBaru = () => {
+    setNama(''); setWa(''); setCatatan(''); setBayar(''); setItems([itemBaru()]); setError('');
+    if (foto) URL.revokeObjectURL(foto);
+    setFoto(null); setFotoFile(null); setSudahDibaca(false);
+    setSukses(''); setLangkah(1);
+  };
+
+  if (sukses) {
+    return (
+      <div className="animate-langkah bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center gap-3 text-center">
+        <div className="animate-sukses w-16 h-16 rounded-full bg-[#D4FF00] flex items-center justify-center">
+          <Check size={32} strokeWidth={3} className="text-[#06402B]" />
+        </div>
+        <h2 className="text-base font-bold text-[#06402B]">Kirim input berhasil</h2>
+        <p className="text-sm text-gray-500">{sukses}</p>
+        <button type="button" onClick={inputBaru} className="w-full mt-2 py-3.5 rounded-2xl text-sm font-bold bg-[#06402B] text-white">Input order baru</button>
+      </div>
+    );
+  }
+
+  const JUDUL = ['Foto nota', 'Data pemesan', 'Pesanan', 'Cek nota'];
+
   return (
     <div className="flex flex-col gap-4">
-      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between text-xs font-semibold">
+          <span className="text-[#06402B]">{JUDUL[langkah - 1]}</span>
+          <span className="text-gray-500">Langkah {langkah}/4</span>
+        </div>
+        <div className="flex gap-1.5">
+          {JUDUL.map((_, i) => (
+            <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i < langkah ? 'bg-[#06402B]' : 'bg-gray-200'}`} />
+          ))}
+        </div>
+      </div>
+
+      {langkah === 1 && (
+      <section key="l1" className="animate-langkah bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
         <h2 className="text-sm font-bold text-[#06402B]">Foto pesanan</h2>
         <p className="text-xs text-gray-500">Foto layar kasir atau nota. Item, jumlah, dan catatan diisi otomatis, lalu cek dulu.</p>
         {foto ? (
@@ -421,10 +468,12 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
             </button>
           </div>
         )}
-        {sudahDibaca && <p className="text-xs font-medium text-[#A35A08]">Terisi otomatis dari foto. Cek item & jumlah di bawah sebelum simpan.</p>}
+        {sudahDibaca && <p className="text-xs font-medium text-[#A35A08]">Terisi otomatis dari foto. Cek di langkah berikutnya.</p>}
       </section>
+      )}
 
-      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+      {langkah === 2 && (
+      <section key="l2" className="animate-langkah bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
         <h2 className="text-sm font-bold text-[#06402B]">Data pemesan</h2>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Nama pemesan <span className="sr-only">wajib</span>
           <input className={field} value={nama} onChange={e => setNama(e.target.value)} placeholder="Nama lengkap" />
@@ -447,8 +496,10 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
           </div>
         </div>
       </section>
+      )}
 
-      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+      {langkah === 3 && (
+      <section key="l3" className="animate-langkah bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
         <h2 className="text-sm font-bold text-[#06402B]">Pesanan</h2>
         {items.map((it, idx) => {
           const info = infoItem(it);
@@ -501,17 +552,55 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
           );
         })}
         <button type="button" onClick={() => setItems(prev => [...prev, itemBaru()])} className="py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-bold text-[#06402B]">+ Tambah item</button>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Catatan
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">Catatan <span className="text-gray-400 font-normal">(opsional)</span>
           <input className={field} value={catatan} onChange={e => setCatatan(e.target.value)} placeholder="mis. sambal pisah" />
         </label>
       </section>
+      )}
+
+      {langkah === 4 && (
+      <section key="l4" className="animate-langkah bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3 text-sm">
+        <div className="text-center border-b border-dashed border-gray-300 pb-3">
+          <h2 className="font-bold text-[#06402B]">Nota pesanan</h2>
+          <p className="text-xs text-gray-500">{cabang}</p>
+        </div>
+        <div className="flex flex-col gap-1 text-xs">
+          <div className="flex justify-between"><span className="text-gray-500">Nama</span><span className="font-semibold">{nama.trim()}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">WhatsApp</span><span className="font-semibold">{wa}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Pembayaran</span><span className="font-semibold">{bayar === 'BAYAR DI TEMPAT' ? 'Bayar di tempat' : bayar}</span></div>
+        </div>
+        <div className="flex flex-col gap-1.5 border-y border-dashed border-gray-300 py-3">
+          {items.map((it, idx) => {
+            const info = infoItem(it);
+            return (
+              <div key={idx} className="flex justify-between gap-2">
+                <span>{it.qty}× {info.menu.name}{info.varian ? ` (${info.varian})` : ''}</span>
+                <span className="font-semibold shrink-0">{rupiah(info.harga * it.qty)}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-between font-bold text-[#06402B]"><span>Total</span><span>{rupiah(total)}</span></div>
+        <p className="text-xs text-gray-500">Catatan: {catatan.trim() || '-'}</p>
+      </section>
+      )}
 
       <div className="sticky bottom-0 bg-[#FDFBF7] pt-2 pb-4 flex flex-col gap-2">
         {error && <p className="text-xs font-medium text-red-500">{error}</p>}
-        {sukses && <p className="text-xs font-medium text-[#06402B]">{sukses}</p>}
-        <button type="button" onClick={simpan} disabled={menyimpan} className="w-full disabled:opacity-60 py-4 rounded-2xl text-sm font-bold bg-[#06402B] text-white shadow-md">
-          {menyimpan ? 'Menyimpan...' : `Simpan order · ${rupiah(total)}`}
-        </button>
+        <div className="flex gap-2">
+          {langkah > 1 && (
+            <button type="button" onClick={() => pindah(langkah - 1)} disabled={menyimpan} className="flex-1 py-4 rounded-2xl text-sm font-bold border border-gray-200 bg-white text-gray-600">Kembali</button>
+          )}
+          {langkah < 4 ? (
+            <button type="button" onClick={lanjut} className="flex-[2] py-4 rounded-2xl text-sm font-bold bg-[#06402B] text-white shadow-md">
+              {langkah === 1 ? (foto ? 'Lanjut' : 'Isi manual') : 'Lanjut'}
+            </button>
+          ) : (
+            <button type="button" onClick={simpan} disabled={menyimpan} className="flex-[2] disabled:opacity-60 py-4 rounded-2xl text-sm font-bold bg-[#06402B] text-white shadow-md">
+              {menyimpan ? 'Mengirim...' : `Kirim input · ${rupiah(total)}`}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

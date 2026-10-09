@@ -11,6 +11,24 @@ body {
   display: none;
 }
 
+/* Wizard Tambah order admin: transisi antar langkah + centang sukses. */
+@keyframes langkah-masuk {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-langkah { animation: langkah-masuk 0.25s ease-out; }
+
+@keyframes sukses-pop {
+  0% { opacity: 0; transform: scale(0.5); }
+  70% { opacity: 1; transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+.animate-sukses { animation: sukses-pop 0.45s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-langkah, .animate-sukses { animation: none; }
+}
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
