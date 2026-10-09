@@ -524,9 +524,25 @@ function Dashboard() {
     [data, branch, periode],
   );
 
+  // Menu tab: di HP baris di header, di layar lebar (md+) kolom tegak di kanan.
+  const menuTab = (tegak: boolean) => (
+    <nav className={tegak
+      ? 'sticky top-5 flex flex-col gap-1 bg-white border border-gray-200 rounded-2xl p-1'
+      : 'grid grid-cols-3 gap-1 bg-white border border-gray-200 rounded-2xl p-1 md:hidden'}
+      role="tablist" aria-label="Menu admin" aria-orientation={tegak ? 'vertical' : 'horizontal'}>
+      {TABS.map(t => (
+        <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+          className={`py-2.5 rounded-xl text-sm font-bold transition-all ${tegak ? 'px-4 text-left' : ''} ${tab === t.id ? 'bg-[#06402B] text-white' : 'text-gray-600'}`}>
+          {t.label}
+        </button>
+      ))}
+    </nav>
+  );
+
   return (
     <div className="min-h-[100dvh] bg-[#FDFBF7]">
-      <div className="max-w-2xl mx-auto px-5 pb-10 flex flex-col gap-4">
+      <div className="max-w-4xl mx-auto px-5 pb-10 md:flex md:gap-6">
+      <div className="flex-1 min-w-0 flex flex-col gap-4">
         <header className="sticky top-0 z-10 bg-[#FDFBF7] pt-5 pb-3 flex flex-col gap-3 border-b border-gray-100">
           <div className="flex justify-between items-end gap-3">
             <div className="flex flex-col">
@@ -540,14 +556,7 @@ function Dashboard() {
               </div>
             )}
           </div>
-          <nav className="grid grid-cols-3 gap-1 bg-white border border-gray-200 rounded-2xl p-1" role="tablist" aria-label="Menu admin">
-            {TABS.map(t => (
-              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-                className={`py-2.5 rounded-xl text-sm font-bold transition-all ${tab === t.id ? 'bg-[#06402B] text-white' : 'text-gray-600'}`}>
-                {t.label}
-              </button>
-            ))}
-          </nav>
+          {menuTab(false)}
         </header>
 
         {loadError && <p className="text-sm text-red-500 font-medium">{loadError}</p>}
@@ -568,6 +577,8 @@ function Dashboard() {
         {tab === 'ringkasan' && <Ringkasan orders={orders} />}
         {tab === 'order' && <DaftarOrder orders={orders} />}
         {tab === 'tambah' && <TambahOrder onSave={simpanOrder} />}
+      </div>
+      <aside className="hidden md:block w-44 shrink-0 pt-5">{menuTab(true)}</aside>
       </div>
     </div>
   );
