@@ -40,7 +40,7 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ✅ ADM-22 Bundle dikecilkan: Admin di-lazy load (`React.lazy`), supabase-js pindah ke chunk `Admin-*.js`. Bundle pelanggan 496 KB (gzip 140 KB) jadi 246 KB (gzip 74 KB). Live (bundle `index-DcJ64Q8Z.js`)
 - ⬜ ADM-23 Rekap manual dan rekap app jalan paralel 1 bulan
 - ⬜ ADM-24 Akun admin tambahan (opsional)
-- 🟡 ADM-25 Backup harian tabel `orders`: `scripts/backup-orders.sh` (pg_dump, gzip, simpan 30 hari) + panduan `docs/BACKUP.md`. Sisa: pasang di VPS (pg_dump, `~/.aminoto-backup.env`, crontab) saat deploy
+- ✅ ADM-25 Backup harian tabel `orders` aktif di VPS: `scripts/backup-orders.sh` (pg_dump 17, gzip, simpan 30 hari), cron 03:00 WIB, uji manual OK `orders-2026-10-09_1326.sql.gz`. Panduan `docs/BACKUP.md`
 - ✅ ADM-26 UI input order dari foto: foto kamera/galeri → Baca foto → item, qty, catatan terisi (hasil contoh). Wajib: cabang, nama, WA, bayar, catatan
 
 ## Keputusan
