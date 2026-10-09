@@ -41,8 +41,9 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ✅ ADM-22 Bundle dikecilkan: Admin di-lazy load (`React.lazy`), supabase-js pindah ke chunk `Admin-*.js`. Bundle pelanggan 496 KB (gzip 140 KB) jadi 246 KB (gzip 74 KB). Live (bundle `index-DcJ64Q8Z.js`)
 - 🔶 ADM-23 Uji ketepatan Baca foto 10 Okt–9 Nov 2026: admin cek tiap hasil dengan foto asli, catat yang salah di `docs/UJI-BACA-FOTO.md`, rekap tiap Senin. Target koreksi di bawah 5%. Order foto asli pertama sekaligus uji ADM-28
 - ⬜ ADM-24 Akun admin tambahan (opsional)
+- ✅ ADM-29 Tambah order jadi wizard 4 langkah (Foto nota → Data pemesan → Pesanan → Cek nota) dengan animasi, layar sukses "Kirim input berhasil". Catatan opsional (order dari foto tanpa catatan tetap bisa disimpan). Foto terbaca langsung ke langkah 2. Commit `1e4d289`, live (bundle `index-B0Mj25Sf.js`)
 - ✅ ADM-25 Backup harian tabel `orders` aktif di VPS: `scripts/backup-orders.sh` (pg_dump 17, gzip, simpan 30 hari), cron 03:00 WIB, uji manual OK `orders-2026-10-09_1326.sql.gz`. Panduan `docs/BACKUP.md`
-- ✅ ADM-26 UI input order dari foto: foto kamera/galeri → Baca foto → item, qty, catatan terisi (hasil contoh). Wajib: cabang, nama, WA, bayar, catatan
+- ✅ ADM-26 UI input order dari foto: foto kamera/galeri → Baca foto → item, qty, catatan terisi (hasil contoh). Wajib: cabang, nama, WA, bayar. Catatan opsional sejak ADM-29
 
 ## Keputusan
 - Baca foto awalnya Gemini Pro, lalu diganti Sumopod (`gpt-4.1-mini`). Key hanya di backend (Supabase secrets).
@@ -52,4 +53,5 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - Commit admin awal: `2a6cf17` (Supabase + /admin), `3cc80b9` (header AMINOTO), `a0bc012` (UI data palsu), `faf1518` (tombol tambah order).
 - Login dan Supabase sengaja dilewati di UI tahap ini. `src/lib/supabase.ts` dan `supabase/schema.sql` tetap ada.
 - ID lama seri MNA tidak dipakai lagi. Pesan commit lama masih menyebutnya, jangan diubah.
+- Repo GitHub pindah ke `marketingnobitos-ux/order-online-apps-aminoto` (9 Okt 2026). Remote laptop dan VPS sudah diganti.
 - Supabase project: `aminoto-order` (ref `arppizmnunkoiwvsakbp`). Commit sambung backend: `78e47df`.
