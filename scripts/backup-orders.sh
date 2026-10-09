@@ -22,7 +22,11 @@ STAMP="$(TZ=Asia/Jakarta date +%Y-%m-%d_%H%M)"
 OUT="$BACKUP_DIR/orders-$STAMP.sql.gz"
 TMP="$OUT.part"
 
-pg_dump "$SUPABASE_DB_URL" \
+# pg_dump di PATH bisa versi lain (VPS punya 16); Supabase butuh >= 17.
+PG_DUMP="${PG_DUMP:-/usr/lib/postgresql/17/bin/pg_dump}"
+[ -x "$PG_DUMP" ] || PG_DUMP=pg_dump
+
+"$PG_DUMP" "$SUPABASE_DB_URL" \
   --table=public.orders \
   --no-owner --no-privileges \
   | gzip > "$TMP"
