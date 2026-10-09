@@ -56,15 +56,22 @@ function groupBy(orders: MockOrder[], keyFn: (o: MockOrder) => string) {
 }
 
 function exportCsv(orders: MockOrder[]) {
+  // Excel setelan Indonesia: pemisah kolom ';'
   const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  // Teks diawali = + - @ diberi ' agar tidak dijalankan Excel sebagai rumus
+  const teks = (v: string) => (/^[=+\-@]/.test(v) ? `'${v}` : v);
+  const waktu = (iso: string) =>
+    new Date(iso).toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta', hour12: false }).slice(0, 16); // 2026-10-09 14:30
   const header = ['Waktu (WIB)', 'Nama', 'WhatsApp', 'Cabang', 'Pembayaran', 'Item', 'Catatan', 'Total'];
   const rows = orders.map(o => [
-    new Date(o.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
-    o.customer_name, o.whatsapp, o.branch, o.payment_method,
-    o.items.map(i => `${i.qty}x ${i.name}${i.variant ? ` (${i.variant})` : ''}`).join('; '),
-    o.note ?? '', o.total,
+    waktu(o.created_at),
+    teks(o.customer_name),
+    `="${o.whatsapp}"`, // tetap teks: 08... dan 628... tidak kehilangan angka depan
+    o.branch, o.payment_method,
+    o.items.map(i => `${i.qty}x ${i.name}${i.variant ? ` (${i.variant})` : ''}`).join(', '),
+    teks(o.note ?? ''), o.total,
   ]);
-  const csv = [header, ...rows].map(r => r.map(esc).join(',')).join('\n');
+  const csv = [header, ...rows].map(r => r.map(esc).join(';')).join('\r\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }); // BOM agar Excel baca UTF-8
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
