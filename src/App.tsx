@@ -9,7 +9,8 @@ import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { StickyCheckoutBar } from './components/StickyCheckoutBar';
 import { FAQ } from './components/FAQ';
-import { Admin } from './components/Admin';
+// Admin di-lazy load agar supabase-js tidak ikut bundle pelanggan.
+const Admin = React.lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
 
 export default function App() {
   const [view, setView] = useState<ViewState>('home');
@@ -52,7 +53,11 @@ export default function App() {
 
   // Halaman admin terpisah dari alur customer (URL /admin, tanpa tombol di menu).
   if (window.location.pathname.startsWith('/admin')) {
-    return <Admin />;
+    return (
+      <React.Suspense fallback={<div className="p-6 text-sm text-gray-500">Memuat…</div>}>
+        <Admin />
+      </React.Suspense>
+    );
   }
 
   return (

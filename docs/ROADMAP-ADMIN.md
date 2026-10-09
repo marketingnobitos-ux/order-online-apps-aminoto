@@ -21,30 +21,30 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ✅ ADM-09 Tombol + Tambah Order (form input admin, data disimpan di memori sampai refresh)
 - ✅ ADM-11 Project Supabase `aminoto-order` (ref `arppizmnunkoiwvsakbp`, Singapore, gratis) dibuat via MCP
 - ✅ ADM-12 Tabel `orders` + RLS (admin insert & read). Advisor keamanan 0 temuan
-- ❌ ADM-10 DIMATIKAN (2026-10-09): order pelanggan tidak lagi disimpan ke Supabase. Insert di `Review.tsx` dihapus, policy `anon insert orders` di-drop. Order hanya masuk lewat input admin
+- ❌ ADM-10 DIMATIKAN (2026-10-09): order pelanggan tidak lagi disimpan ke Supabase. Insert di `Review.tsx` dihapus, policy `anon insert orders` di-drop. Order hanya masuk lewat input admin. Commit `30c1887`, deploy VPS live (bundle `index-CNGqzE1p.js`)
 - ✅ ADM-13 Akun admin dibuat di Supabase Auth (1 akun, terkonfirmasi)
 - ✅ ADM-16 Env Supabase ikut build VPS (`deploy.sh` export `deploy.env`), live
 - ✅ ADM-17 Login admin email + password (Supabase Auth), live
 - ✅ ADM-18 Data admin dari tabel `orders`; tombol Muat ulang & Keluar; simpan order input admin ke DB
 - ✅ ADM-19 `/admin` dibuka langsung di server: HTTP 200
-- ✅ ADM-27 Edge Function `baca-foto` (Gemini) tersambung ke tombol Baca foto. Anon key ditolak (401), hanya admin login
-- ✅ ADM-28 API key Gemini diisi user di Supabase secrets (belum diuji dengan foto asli)
+- ✅ ADM-27 Edge Function `baca-foto` (kini Sumopod `gpt-4.1-mini`, sebelumnya Gemini; source di repo, commit `fa3f3a1`) tersambung ke tombol Baca foto. Anon key ditolak (401), hanya admin login
+- ✅ ADM-28 API key AI diisi user di Supabase secrets. Baca foto juga isi nama pemesan, foto dikecilkan ke 1024px (commit `132b271`). Belum diuji dengan foto order asli
 
 ## Menunggu user
-- ⏳ ADM-14 Teks kebijakan privasi singkat (nama & WA pelanggan kini tersimpan di DB)
+- ⏳ ADM-14 Teks kebijakan privasi singkat. Prioritas turun sejak ADM-10 mati: app pelanggan tidak menyimpan data lagi, hanya admin yang input nama & WA
 
 ## Antrean
 - ✅ ADM-15 Desain ulang admin: tab Ringkasan/Order/Tambah, filter periode + cabang, cari order, tanggal ramah, varian pakai tombol
-- ⬜ ADM-20 Batasi spam order palsu (validasi, rate limit)
+- ❌ ADM-20 Tidak perlu lagi: sejak ADM-10 mati, anon tidak bisa insert, jadi tidak ada jalur spam order palsu
 - ⬜ ADM-21 Uji export CSV di Excel
-- ⬜ ADM-22 Kecilkan bundle: sekarang 496 KB (gzip 140 KB), naik dari 266 KB karena supabase-js. Pisah halaman admin (lazy load)
+- ✅ ADM-22 Bundle dikecilkan: Admin di-lazy load (`React.lazy`), supabase-js pindah ke chunk `Admin-*.js`. Bundle pelanggan 496 KB (gzip 140 KB) jadi 246 KB (gzip 74 KB). Belum deploy VPS
 - ⬜ ADM-23 Rekap manual dan rekap app jalan paralel 1 bulan
 - ⬜ ADM-24 Akun admin tambahan (opsional)
 - ⬜ ADM-25 Backup tabel `orders` berkala
 - ✅ ADM-26 UI input order dari foto: foto kamera/galeri → Baca foto → item, qty, catatan terisi (hasil contoh). Wajib: cabang, nama, WA, bayar, catatan
 
 ## Keputusan
-- Baca foto pakai Gemini Pro (berbayar, data tidak dipakai Google). Key hanya di backend.
+- Baca foto awalnya Gemini Pro, lalu diganti Sumopod (`gpt-4.1-mini`). Key hanya di backend (Supabase secrets).
 - Aturan CLAUDE.md "tidak memakai AI" belum diperbarui: AI dipakai khusus admin (baca foto). Perlu disetujui untuk diubah.
 
 ## Riwayat penting
