@@ -31,7 +31,7 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ✅ ADM-28 API key AI diisi user di Supabase secrets. Baca foto juga isi nama pemesan, foto dikecilkan ke 1024px (commit `132b271`). Belum diuji dengan foto order asli
 
 ## Menunggu user
-- ⏳ ADM-25 cek: Sabtu 10 Okt 2026 setelah 03:00 WIB, di VPS jalankan `tail ~/backups/aminoto/backup.log; ls -lh ~/backups/aminoto/`. Harus ada `[backup] OK` dan file `orders-2026-10-10_0300.sql.gz`
+- ⏳ ADM-25 Uji 9 Okt 2026: perintah cron persis dijalankan dalam lingkungan minimal (`env -i`), exit 0, `[backup] OK orders-2026-10-09_1342.sql.gz`. Sisa cek (tidak perlu menjalankan apa pun, cron otomatis): Sabtu 10 Okt 2026 setelah 03:00 WIB, di VPS jalankan `tail ~/backups/aminoto/backup.log; ls -lh ~/backups/aminoto/`. Harus ada `[backup] OK` dan file `orders-2026-10-10_0300.sql.gz`
 - ⏳ ADM-14 Teks kebijakan privasi singkat. Prioritas turun sejak ADM-10 mati: app pelanggan tidak menyimpan data lagi, hanya admin yang input nama & WA
 
 ## Antrean
