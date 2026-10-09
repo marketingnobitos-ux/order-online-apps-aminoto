@@ -39,7 +39,7 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ❌ ADM-20 Tidak perlu lagi: sejak ADM-10 mati, anon tidak bisa insert, jadi tidak ada jalur spam order palsu
 - 🔶 ADM-21 Export CSV disiapkan untuk Excel setelan Indonesia: pemisah `;`, WA tetap teks (08… dan 628… tidak hilang angka depan), waktu `2026-10-09 14:30` WIB, teks diawali `= + - @` diberi `'`. Lint + build lolos. Live (bundle `index-DcJ64Q8Z.js`). Sisa: user uji buka di Excel dengan data asli
 - ✅ ADM-22 Bundle dikecilkan: Admin di-lazy load (`React.lazy`), supabase-js pindah ke chunk `Admin-*.js`. Bundle pelanggan 496 KB (gzip 140 KB) jadi 246 KB (gzip 74 KB). Live (bundle `index-DcJ64Q8Z.js`)
-- ⬜ ADM-23 Rekap manual dan rekap app jalan paralel 1 bulan
+- 🔶 ADM-23 Uji ketepatan Baca foto 10 Okt–9 Nov 2026: admin cek tiap hasil dengan foto asli, catat yang salah di `docs/UJI-BACA-FOTO.md`, rekap tiap Senin. Target koreksi di bawah 5%. Order foto asli pertama sekaligus uji ADM-28
 - ⬜ ADM-24 Akun admin tambahan (opsional)
 - ✅ ADM-25 Backup harian tabel `orders` aktif di VPS: `scripts/backup-orders.sh` (pg_dump 17, gzip, simpan 30 hari), cron 03:00 WIB, uji manual OK `orders-2026-10-09_1326.sql.gz`. Panduan `docs/BACKUP.md`
 - ✅ ADM-26 UI input order dari foto: foto kamera/galeri → Baca foto → item, qty, catatan terisi (hasil contoh). Wajib: cabang, nama, WA, bayar, catatan
