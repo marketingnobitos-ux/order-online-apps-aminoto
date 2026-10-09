@@ -14,6 +14,10 @@ fi
 # shellcheck disable=SC1090
 . "$ENV_FILE"
 : "${SUPABASE_DB_URL:?SUPABASE_DB_URL belum diisi di $ENV_FILE}"
+case "$SUPABASE_DB_URL" in
+  postgresql://*|postgres://*) ;;
+  *) echo "[backup] SUPABASE_DB_URL bukan URL postgresql://" >&2; exit 1 ;;
+esac
 
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
@@ -21,6 +25,7 @@ chmod 700 "$BACKUP_DIR"
 STAMP="$(TZ=Asia/Jakarta date +%Y-%m-%d_%H%M)"
 OUT="$BACKUP_DIR/orders-$STAMP.sql.gz"
 TMP="$OUT.part"
+trap 'rm -f "$TMP"' EXIT
 
 # pg_dump di PATH bisa versi lain (VPS punya 16); Supabase butuh >= 17.
 PG_DUMP="${PG_DUMP:-/usr/lib/postgresql/17/bin/pg_dump}"
