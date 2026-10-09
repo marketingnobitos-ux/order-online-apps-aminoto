@@ -36,8 +36,8 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 ## Antrean
 - ✅ ADM-15 Desain ulang admin: tab Ringkasan/Order/Tambah, filter periode + cabang, cari order, tanggal ramah, varian pakai tombol
 - ❌ ADM-20 Tidak perlu lagi: sejak ADM-10 mati, anon tidak bisa insert, jadi tidak ada jalur spam order palsu
-- 🔶 ADM-21 Export CSV disiapkan untuk Excel setelan Indonesia: pemisah `;`, WA tetap teks (08… dan 628… tidak hilang angka depan), waktu `2026-10-09 14:30` WIB, teks diawali `= + - @` diberi `'`. Lint + build lolos. Sisa: user uji buka di Excel dengan data asli. Belum deploy VPS
-- ✅ ADM-22 Bundle dikecilkan: Admin di-lazy load (`React.lazy`), supabase-js pindah ke chunk `Admin-*.js`. Bundle pelanggan 496 KB (gzip 140 KB) jadi 246 KB (gzip 74 KB). Belum deploy VPS
+- 🔶 ADM-21 Export CSV disiapkan untuk Excel setelan Indonesia: pemisah `;`, WA tetap teks (08… dan 628… tidak hilang angka depan), waktu `2026-10-09 14:30` WIB, teks diawali `= + - @` diberi `'`. Lint + build lolos. Live (bundle `index-DcJ64Q8Z.js`). Sisa: user uji buka di Excel dengan data asli
+- ✅ ADM-22 Bundle dikecilkan: Admin di-lazy load (`React.lazy`), supabase-js pindah ke chunk `Admin-*.js`. Bundle pelanggan 496 KB (gzip 140 KB) jadi 246 KB (gzip 74 KB). Live (bundle `index-DcJ64Q8Z.js`)
 - ⬜ ADM-23 Rekap manual dan rekap app jalan paralel 1 bulan
 - ⬜ ADM-24 Akun admin tambahan (opsional)
 - 🟡 ADM-25 Backup harian tabel `orders`: `scripts/backup-orders.sh` (pg_dump, gzip, simpan 30 hari) + panduan `docs/BACKUP.md`. Sisa: pasang di VPS (pg_dump, `~/.aminoto-backup.env`, crontab) saat deploy
