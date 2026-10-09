@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { MOCK_ORDERS, MockOrder, MockOrderItem } from '../lib/mock-orders';
 import { BRANCHES, MENU_ITEMS } from '../data';
 import { supabase } from '../lib/supabase';
+import { LayoutDashboard, ClipboardList, RefreshCw, LogOut, Menu, X, ShoppingBag, Wallet, Receipt, Store, CalendarDays, ChevronDown, LucideIcon } from 'lucide-react';
 
 // Data order dari Supabase (tabel orders). Kalau env Supabase belum diset, pakai data contoh
 // (mock-orders.ts) supaya UI tetap bisa dicoba lokal.
@@ -22,8 +23,6 @@ const tanggalRamah = (iso: string) =>
   new Date(iso).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 const jam = (iso: string) =>
   new Date(iso).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' });
-const bulanRamah = (key: string) =>
-  new Date(`${key}-01T00:00:00+07:00`).toLocaleDateString('id-ID', { month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' });
 
 type Periode = 'hari' | '7hari' | 'bulan' | 'semua';
 const PERIODE: { id: Periode; label: string }[] = [
@@ -78,67 +77,145 @@ const chip = (aktif: boolean) =>
   `shrink-0 px-3.5 py-2 rounded-xl text-[13px] font-bold border transition-all ${aktif ? 'bg-[#06402B] text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
 const pilihan = (aktif: boolean) =>
   `flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${aktif ? 'border-[#06402B] bg-[#F4FBF4] text-[#06402B]' : 'border-gray-200 bg-white text-gray-600'}`;
+const pilihFilter = 'w-full appearance-none bg-white border border-gray-200 rounded-xl py-2.5 pl-9 pr-8 text-[13px] font-bold text-gray-700 outline-none focus:border-[#06402B]';
 const field = 'w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-sm outline-none focus:border-[#06402B] focus:ring-1 focus:ring-[#06402B]';
 
-function Kartu({ label, nilai, hijau }: { label: string; nilai: string; hijau?: boolean }) {
+function Kartu({ label, nilai, hijau, Ikon }: { label: string; nilai: string; hijau?: boolean; Ikon: LucideIcon }) {
   return (
-    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm min-w-0">
-      <p className="text-[11px] text-gray-500 font-semibold">{label}</p>
-      <p className={`text-xl font-bold mt-0.5 break-words ${hijau ? 'text-[#06402B]' : 'text-gray-900'}`}>{nilai}</p>
+    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm min-w-0 flex flex-col gap-3">
+      <span className="w-9 h-9 rounded-xl bg-[#F4FBF4] text-[#06402B] flex items-center justify-center"><Ikon size={18} /></span>
+      <div>
+        <p className="text-[11px] text-gray-500 font-semibold">{label}</p>
+        <p className={`text-xl font-bold mt-0.5 break-words ${hijau ? 'text-[#06402B]' : 'text-gray-900'}`}>{nilai}</p>
+      </div>
     </div>
   );
 }
 
-function Ringkasan({ orders }: { orders: MockOrder[] }) {
+function Ringkasan({ orders, keterangan }: { orders: MockOrder[]; keterangan: string }) {
   const omzet = orders.reduce((s, o) => s + o.total, 0);
   const rata = orders.length ? Math.round(omzet / orders.length) : 0;
   const perCabang = groupBy(orders, o => o.branch).sort((a, b) => b[1].omzet - a[1].omzet);
-  const perHari = groupBy(orders, o => dayKey(o.created_at)).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  const perBulan = groupBy(orders, o => dayKey(o.created_at).slice(0, 7)).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  const perHari = groupBy(orders, o => dayKey(o.created_at)).sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  const perBulan = groupBy(orders, o => dayKey(o.created_at).slice(0, 7)).sort((a, b) => (a[0] < b[0] ? -1 : 1));
   const maxCabang = Math.max(1, ...perCabang.map(([, v]) => v.omzet));
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="grid grid-cols-2 gap-3">
-        <Kartu label="Total order" nilai={String(orders.length)} />
-        <Kartu label="Omzet" nilai={rupiah(omzet)} hijau />
-        <Kartu label="Rata-rata per order" nilai={rupiah(rata)} />
-        <Kartu label="Cabang terlaris" nilai={perCabang[0]?.[0].replace('Aminoto ', '') ?? '-'} />
-      </section>
-
-      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
-        <h2 className="text-sm font-bold text-[#06402B]">Per cabang</h2>
-        {perCabang.length === 0 && <p className="text-sm text-gray-500">Belum ada order di periode ini.</p>}
-        {perCabang.map(([nama, v]) => (
-          <div key={nama} className="flex flex-col gap-1.5">
-            <div className="flex justify-between gap-3 text-sm">
-              <span className="font-semibold text-gray-800">{nama}</span>
-              <span className="text-gray-600">{v.count} order · <strong className="text-gray-900">{rupiah(v.omzet)}</strong></span>
-            </div>
-            <div className="h-2 rounded-full bg-[#F4FBF4] overflow-hidden">
-              <div className="h-full bg-[#06402B] rounded-full" style={{ width: `${(v.omzet / maxCabang) * 100}%` }} />
-            </div>
+      <section className="bg-[#06402B] text-white rounded-2xl p-5 flex flex-col gap-4">
+        <div>
+          <p className="text-xs font-semibold text-white/70">{tanggalRamah(new Date().toISOString())}</p>
+          <h2 className="text-xl font-extrabold mt-1">Selamat datang, Admin</h2>
+          <p className="text-sm text-white/70">Ringkasan order {keterangan}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white/10 rounded-xl p-3">
+            <p className="text-[11px] text-white/70 font-semibold">Order</p>
+            <p className="text-2xl font-bold">{orders.length}</p>
           </div>
-        ))}
+          <div className="bg-white/10 rounded-xl p-3">
+            <p className="text-[11px] text-white/70 font-semibold">Omzet</p>
+            <p className="text-xl sm:text-2xl font-bold text-[#D4FF00] break-words">{rupiah(omzet)}</p>
+          </div>
+        </div>
       </section>
 
-      <Rekap title="Per hari" rows={perHari} label={tanggalRamah} />
-      <Rekap title="Per bulan" rows={perBulan} label={bulanRamah} />
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Kartu Ikon={ShoppingBag} label="Total order" nilai={String(orders.length)} />
+        <Kartu Ikon={Wallet} label="Omzet" nilai={rupiah(omzet)} hijau />
+        <Kartu Ikon={Receipt} label="Rata-rata per order" nilai={rupiah(rata)} />
+        <Kartu Ikon={Store} label="Cabang terlaris" nilai={perCabang[0]?.[0].replace('Aminoto ', '') ?? '-'} />
+      </section>
+
+      {orders.length === 0 ? (
+        <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 text-center text-sm text-gray-500">
+          Belum ada order di periode ini.
+        </section>
+      ) : (
+        <>
+          <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+            <h2 className="text-sm font-bold text-[#06402B]">Per cabang</h2>
+            {perCabang.map(([nama, v]) => (
+              <div key={nama} className="flex flex-col gap-1.5">
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="font-semibold text-gray-800">{nama}</span>
+                  <span className="text-gray-600">{v.count} order · <strong className="text-gray-900">{rupiah(v.omzet)}</strong></span>
+                </div>
+                <div className="h-2 rounded-full bg-[#F4FBF4] overflow-hidden">
+                  <div className="h-full bg-[#06402B] rounded-full" style={{ width: `${(v.omzet / maxCabang) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </section>
+
+          <Grafik perHari={perHari} perBulan={perBulan} />
+        </>
+      )}
     </div>
   );
 }
 
-function Rekap({ title, rows, label }: { title: string; rows: [string, { count: number; omzet: number }][]; label: (k: string) => string }) {
+// Garis halus (Catmull-Rom ke kurva Bezier) di kotak 0..W x 0..H.
+function garisHalus(pts: [number, number][]) {
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [p0, p1, p2, p3] = [pts[i - 1] ?? pts[i], pts[i], pts[i + 1], pts[i + 2] ?? pts[i + 1]];
+    const c1y = Math.min(H, Math.max(0, p1[1] + (p2[1] - p0[1]) / 6));
+    const c2y = Math.min(H, Math.max(0, p2[1] - (p3[1] - p1[1]) / 6));
+    d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${c1y} ${p2[0] - (p3[0] - p1[0]) / 6},${c2y} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+const W = 300;
+const H = 100;
+
+type Baris = [string, { count: number; omzet: number }][];
+const labelHari = (k: string) => new Date(`${k}T12:00:00+07:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' });
+const labelBulan = (k: string) => new Date(`${k}-01T12:00:00+07:00`).toLocaleDateString('id-ID', { month: 'short', year: '2-digit', timeZone: 'Asia/Jakarta' });
+
+// Tab kecil (segmented) untuk pilihan di dalam satu halaman/kartu.
+function TabKecil<T extends string>({ pilihan, nilai, ubah, label }: { pilihan: { id: T; label: string }[]; nilai: T; ubah: (v: T) => void; label: string }) {
   return (
-    <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      <h2 className="text-sm font-bold text-[#06402B] px-4 pt-4 pb-2">{title}</h2>
-      {rows.length === 0 && <p className="px-4 pb-4 text-sm text-gray-500">Belum ada data.</p>}
-      {rows.map(([k, v]) => (
-        <div key={k} className="flex justify-between gap-3 px-4 py-3 border-t border-gray-100 text-sm">
-          <span className="font-semibold text-gray-800 capitalize">{label(k.length === 7 ? k : `${k}T12:00:00+07:00`)}</span>
-          <span className="text-gray-600 text-right shrink-0">{v.count} order · <strong className="text-gray-900">{rupiah(v.omzet)}</strong></span>
-        </div>
+    <div className="inline-flex bg-[#F4FBF4] rounded-xl p-1 gap-1" role="tablist" aria-label={label}>
+      {pilihan.map(p => (
+        <button key={p.id} role="tab" aria-selected={nilai === p.id} onClick={() => ubah(p.id)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${nilai === p.id ? 'bg-[#06402B] text-white' : 'text-gray-600'}`}>
+          {p.label}
+        </button>
       ))}
+    </div>
+  );
+}
+
+function Grafik({ perHari, perBulan }: { perHari: Baris; perBulan: Baris }) {
+  const [mode, setMode] = useState<'hari' | 'bulan'>('hari');
+  const rows = mode === 'hari' ? perHari : perBulan;
+  const label = mode === 'hari' ? labelHari : labelBulan;
+  const title = mode === 'hari' ? 'Omzet per hari' : 'Omzet per bulan';
+  const max = Math.max(1, ...rows.map(([, v]) => v.omzet));
+  const total = rows.reduce((s, [, v]) => s + v.omzet, 0);
+  // Satu titik saja: mulai dari nol di kiri supaya tetap terbaca sebagai garis naik.
+  const nilai = rows.length === 1 ? [0, rows[0][1].omzet] : rows.map(([, v]) => v.omzet);
+  const pts: [number, number][] = nilai.map((n, i) => [(i / (nilai.length - 1)) * W, H - (n / max) * (H - 8) - 4]);
+  const garis = garisHalus(pts);
+  // Label sumbu X: semua kalau sedikit, kalau banyak cukup awal, tengah, akhir.
+  const tampil = rows.length <= 7 ? rows : [rows[0], rows[Math.floor(rows.length / 2)], rows[rows.length - 1]];
+
+  return (
+    <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+      <div className="flex justify-between items-baseline gap-3">
+        <h2 className="text-sm font-bold text-[#06402B]">Omzet</h2>
+        <TabKecil label="Periode grafik" nilai={mode} ubah={setMode} pilihan={[{ id: 'hari', label: 'Harian' }, { id: 'bulan', label: 'Bulanan' }]} />
+      </div>
+      <p className="text-xs text-gray-500 -mt-1">Puncak <strong className="text-gray-900">{rupiah(max)}</strong></p>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-32" role="img" aria-label={`${title}, total ${rupiah(total)}`}>
+        <line x1="0" y1={H - 0.5} x2={W} y2={H - 0.5} stroke="#E5E7EB" vectorEffect="non-scaling-stroke" />
+        <path d={`${garis} L${W},${H} L0,${H} Z`} fill="#D4FF00" fillOpacity="0.35" />
+        <path d={garis} fill="none" stroke="#06402B" strokeWidth="2.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
+        {tampil.map(([k, v]) => <span key={k} title={`${v.count} order · ${rupiah(v.omzet)}`}>{label(k)}</span>)}
+      </div>
     </section>
   );
 }
@@ -434,11 +511,12 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
 }
 
 type Tab = 'ringkasan' | 'order' | 'tambah';
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'ringkasan', label: 'Ringkasan' },
-  { id: 'order', label: 'Order' },
-  { id: 'tambah', label: '+ Tambah' },
+const TABS: { id: Tab; label: string; Ikon: LucideIcon }[] = [
+  { id: 'ringkasan', label: 'Dashboard', Ikon: LayoutDashboard },
+  { id: 'order', label: 'Order', Ikon: ClipboardList },
 ];
+// Tab 'tambah' adalah sub-tab dari halaman Order.
+const halaman = (t: Tab): Tab => (t === 'tambah' ? 'order' : t);
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -524,61 +602,93 @@ function Dashboard() {
     [data, branch, periode],
   );
 
-  // Menu tab: di HP baris di header, di layar lebar (md+) kolom tegak di kanan.
-  const menuTab = (tegak: boolean) => (
-    <nav className={tegak
-      ? 'sticky top-5 flex flex-col gap-1 bg-white border border-gray-200 rounded-2xl p-1'
-      : 'grid grid-cols-3 gap-1 bg-white border border-gray-200 rounded-2xl p-1 md:hidden'}
-      role="tablist" aria-label="Menu admin" aria-orientation={tegak ? 'vertical' : 'horizontal'}>
-      {TABS.map(t => (
-        <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-          className={`py-2.5 rounded-xl text-sm font-bold transition-all ${tegak ? 'px-4 text-left' : ''} ${tab === t.id ? 'bg-[#06402B] text-white' : 'text-gray-600'}`}>
-          {t.label}
-        </button>
-      ))}
-    </nav>
+  const [menuBuka, setMenuBuka] = useState(false);
+  const labelTab = TABS.find(t => t.id === halaman(tab))?.label;
+  const keterangan = `${periode === 'semua' ? 'semua waktu' : PERIODE.find(p => p.id === periode)?.label.toLowerCase()} · ${branch === 'Semua' ? 'semua cabang' : branch}`;
+
+  // Isi sidebar: dipakai di sidebar tetap (md+) dan di laci HP.
+  const isiSidebar = (
+    <>
+      <div className="flex justify-between items-start px-2 mb-6">
+        <div>
+          <span className="font-extrabold text-lg tracking-tight leading-none">AMINOTO</span>
+          <p className="text-xs text-white/60 mt-1">Admin Panel{!supabase && ' · data contoh'}</p>
+        </div>
+        <button onClick={() => setMenuBuka(false)} aria-label="Tutup menu" className="md:hidden p-1 text-white/70"><X size={20} /></button>
+      </div>
+      <nav className="flex flex-col gap-1" role="tablist" aria-label="Menu admin" aria-orientation="vertical">
+        {TABS.map(({ id, label, Ikon }) => (
+          <button key={id} role="tab" aria-selected={halaman(tab) === id} onClick={() => { setTab(id); setMenuBuka(false); }}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition-all ${halaman(tab) === id ? 'bg-[#D4FF00] text-[#06402B]' : 'text-white/80 hover:bg-white/10'}`}>
+            <Ikon size={18} />{label}
+          </button>
+        ))}
+      </nav>
+      {supabase && (
+        <div className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-3">
+          <button onClick={muat} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/80 hover:bg-white/10">
+            <RefreshCw size={18} className={memuat ? 'animate-spin' : ''} />{memuat ? 'Memuat...' : 'Muat ulang'}
+          </button>
+          <button onClick={keluar} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/80 hover:bg-white/10">
+            <LogOut size={18} />Keluar
+          </button>
+        </div>
+      )}
+    </>
   );
 
   return (
     <div className="min-h-[100dvh] bg-[#FDFBF7]">
-      <div className="max-w-4xl mx-auto px-5 pb-10 md:flex md:gap-6">
-      <div className="flex-1 min-w-0 flex flex-col gap-4">
-        <header className="sticky top-0 z-10 bg-[#FDFBF7] pt-5 pb-3 flex flex-col gap-3 border-b border-gray-100">
-          <div className="flex justify-between items-end gap-3">
-            <div className="flex flex-col">
-              <span className="font-extrabold text-[#06402B] text-lg tracking-tight uppercase leading-none">AMINOTO</span>
-              <h1 className="text-sm font-semibold text-gray-500 mt-1">Admin{!supabase && <> · <span className="text-[#A35A08]">data contoh</span></>}</h1>
-            </div>
-            {supabase && (
-              <div className="flex gap-2">
-                <button onClick={muat} className="px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 bg-white">{memuat ? 'Memuat...' : 'Muat ulang'}</button>
-                <button onClick={keluar} className="px-3 py-2 rounded-xl text-xs font-bold border border-gray-200 bg-white">Keluar</button>
-              </div>
-            )}
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-60 bg-[#06402B] text-white p-4 flex-col">{isiSidebar}</aside>
+
+      {menuBuka && (
+        <div className="md:hidden fixed inset-0 z-30" role="dialog" aria-modal="true" aria-label="Menu admin">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setMenuBuka(false)} />
+          <aside className="absolute left-0 top-0 h-full w-64 bg-[#06402B] text-white p-4 flex flex-col shadow-xl">{isiSidebar}</aside>
+        </div>
+      )}
+
+      <div className="md:ml-60">
+      <div className="max-w-4xl mx-auto px-5 pb-10 flex flex-col gap-4">
+        <header className="sticky top-0 z-10 bg-[#FDFBF7] pt-5 pb-3 flex items-center gap-3 border-b border-gray-100">
+          <button onClick={() => setMenuBuka(true)} aria-label="Buka menu" aria-expanded={menuBuka}
+            className="md:hidden p-2 rounded-xl border border-gray-200 bg-white text-[#06402B]"><Menu size={20} /></button>
+          <div>
+            <h1 className="text-lg font-bold text-[#06402B] leading-none">{labelTab}</h1>
+            <p className="text-xs text-gray-500 mt-1">Rekap order Pecel Lele Aminoto</p>
           </div>
-          {menuTab(false)}
         </header>
 
         {loadError && <p className="text-sm text-red-500 font-medium">{loadError}</p>}
 
+        {halaman(tab) === 'order' && (
+          <TabKecil label="Menu order" nilai={tab} ubah={setTab} pilihan={[{ id: 'order', label: 'Daftar order' }, { id: 'tambah', label: 'Tambah order' }]} />
+        )}
+
         {tab !== 'tambah' && (
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2 overflow-x-auto hide-scrollbar" aria-label="Filter periode">
-              {PERIODE.map(p => <button key={p.id} onClick={() => setPeriode(p.id)} className={chip(periode === p.id)}>{p.label}</button>)}
-            </div>
-            <div className="flex gap-2 overflow-x-auto hide-scrollbar" aria-label="Filter cabang">
-              {['Semua', ...BRANCHES.map(b => b.name)].map(n => (
-                <button key={n} onClick={() => setBranch(n)} className={chip(branch === n)}>{n === 'Semua' ? 'Semua cabang' : n.replace('Aminoto ', '')}</button>
-              ))}
-            </div>
+          /* Filter dropdown: satu baris, hemat tempat. */
+          <div className="grid grid-cols-2 gap-2">
+            <label className="relative">
+              <CalendarDays size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#06402B] pointer-events-none" />
+              <select value={periode} onChange={e => setPeriode(e.target.value as Periode)} aria-label="Filter periode" className={pilihFilter}>
+                {PERIODE.map(p => <option key={p.id} value={p.id}>{p.id === 'semua' ? 'Semua waktu' : p.label}</option>)}
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </label>
+            <label className="relative">
+              <Store size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#06402B] pointer-events-none" />
+              <select value={branch} onChange={e => setBranch(e.target.value)} aria-label="Filter cabang" className={pilihFilter}>
+                {['Semua', ...BRANCHES.map(b => b.name)].map(n => <option key={n} value={n}>{n === 'Semua' ? 'Semua cabang' : n.replace('Aminoto ', '')}</option>)}
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </label>
           </div>
         )}
 
-        {tab === 'ringkasan' && <Ringkasan orders={orders} />}
+        {tab === 'ringkasan' && <Ringkasan orders={orders} keterangan={keterangan} />}
         {tab === 'order' && <DaftarOrder orders={orders} />}
         {tab === 'tambah' && <TambahOrder onSave={simpanOrder} />}
       </div>
-      <aside className="hidden md:block w-44 shrink-0 pt-5">{menuTab(true)}</aside>
       </div>
     </div>
   );
