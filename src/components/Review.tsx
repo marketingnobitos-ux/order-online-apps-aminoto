@@ -41,7 +41,8 @@ Mohon segera diproses ya!`;
       setIsCopying(false);
       clearCart();
       setView('home');
-      window.open(waUrl, '_blank');
+      // Browser HP bisa memblokir pop-up: pindah di tab yang sama supaya WhatsApp tetap terbuka.
+      if (!window.open(waUrl, '_blank')) window.location.href = waUrl;
     }, 300); // Tiny delay to ensure UI updates before opening new tab
   };
 

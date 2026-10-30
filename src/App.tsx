@@ -12,8 +12,20 @@ import { FAQ } from './components/FAQ';
 // Admin di-lazy load agar supabase-js tidak ikut bundle pelanggan.
 const Admin = React.lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
 
+// HP bisa membuang tab saat pelanggan pindah ke WhatsApp. Simpan sesi di sessionStorage
+// supaya saat kembali halaman, keranjang, dan isian tidak hilang.
+const KUNCI_SESI = 'aminoto-sesi';
+const bacaSesi = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(KUNCI_SESI) ?? '{}') ?? {};
+  } catch {
+    return {};
+  }
+};
+
 export default function App() {
-  const [view, setView] = useState<ViewState>('home');
+  const [sesi] = useState(bacaSesi);
+  const [view, setView] = useState<ViewState>(sesi.view ?? 'home');
   const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -22,13 +34,21 @@ export default function App() {
     }
   }, [view]);
 
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(sesi.cart ?? []);
   
-  const [name, setName] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('');
-  const [note, setNote] = useState('');
-  const [selectedBranch, setSelectedBranch] = useState('Aminoto Cipto');
+  const [name, setName] = useState<string>(sesi.name ?? '');
+  const [whatsapp, setWhatsapp] = useState<string>(sesi.whatsapp ?? '');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>(sesi.paymentMethod ?? '');
+  const [note, setNote] = useState<string>(sesi.note ?? '');
+  const [selectedBranch, setSelectedBranch] = useState<string>(sesi.selectedBranch ?? 'Aminoto Cipto');
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(KUNCI_SESI, JSON.stringify({ view, cart, name, whatsapp, paymentMethod, note, selectedBranch }));
+    } catch {
+      // Penyimpanan diblokir browser: app tetap jalan, hanya sesi tidak dipulihkan.
+    }
+  }, [view, cart, name, whatsapp, paymentMethod, note, selectedBranch]);
 
   const addToCart = (menuItem: any, variant?: string) => {
     setCart(prev => {
