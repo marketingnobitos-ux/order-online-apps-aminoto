@@ -35,9 +35,14 @@ Home → (pilih cabang di Menu) → Menu → Keranjang → Checkout (nama, WA, m
 
 ## Konfigurasi terpusat (src/data.ts)
 - `ADMIN_WHATSAPP` — nomor WA admin. Ubah **di sini saja**.
-- `ONLINE_ORDER_OPEN_HOUR` / `ONLINE_ORDER_CLOSE_HOUR` — jam layanan order online (WIB).
-- `getJakartaHour()` / `isOnlineOrderOpen()` — selalu hitung jam di zona Asia/Jakarta,
-  **jangan** pakai `new Date().getHours()` (itu mengikuti jam perangkat pelanggan).
+- `KOMUNITAS_WA_URL` — link undangan grup komunitas WA (kosong = kartu komunitas disembunyikan).
+- Jam buka dalam menit sejak 00.00 WIB, sama untuk semua cabang:
+  - `OUTLET_OPEN` / `OUTLET_OPEN_FRIDAY` / `OUTLET_CLOSE` — outlet 10.00–22.00, Jumat mulai 12.45.
+  - `ONLINE_ORDER_OPEN` / `ONLINE_ORDER_OPEN_FRIDAY` / `ONLINE_ORDER_CLOSE` — order online
+    10.00–20.00, Jumat mulai 12.45.
+  - Teks tampilan (`JAM_OUTLET`, `JAM_ORDER_ONLINE`, versi `_JUMAT`) dibentuk dari konstanta itu.
+- `getJakartaTime()` / `isOutletOpen()` / `isOnlineOrderOpen()` — selalu hitung hari & jam di zona
+  Asia/Jakarta, **jangan** pakai `new Date().getHours()` (itu mengikuti jam perangkat pelanggan).
 
 ## Aturan kerja untuk Claude
 - Tunjukkan file yang akan diubah + rencana SEBELUM menulis kode; tunggu persetujuan.

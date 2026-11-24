@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { JAM_ORDER_ONLINE, JAM_ORDER_ONLINE_JUMAT, JAM_OUTLET, JAM_OUTLET_JUMAT } from '../data';
 
 export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -11,7 +12,7 @@ export function FAQ() {
   const faqs = [
     {
       q: 'Jam operasional Aminoto?',
-      a: 'Berikut jam operasional Aminoto setiap harinya:\n• Order Online: 10.00 - 20.00\n• Outlet (Makan di Tempat): 10.00 - 22.00\n\nJangan sampai kelewatan jamnya ya, #WargaAminoto!',
+      a: `Berikut jam operasional Aminoto (WIB):\n• Order Online: ${JAM_ORDER_ONLINE} (Jumat ${JAM_ORDER_ONLINE_JUMAT})\n• Outlet (Makan di Tempat): ${JAM_OUTLET} (Jumat ${JAM_OUTLET_JUMAT})\n\nJangan sampai kelewatan jamnya ya, #WargaAminoto!`,
     },
     {
       q: 'Apakah bisa pesan untuk katering/acara?',

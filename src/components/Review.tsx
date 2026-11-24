@@ -1,5 +1,5 @@
 import React from 'react';
-import { MENU_ITEMS, ADMIN_WHATSAPP, ONLINE_ORDER_OPEN_HOUR, ONLINE_ORDER_CLOSE_HOUR, isOnlineOrderOpen } from '../data';
+import { MENU_ITEMS, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, JAM_ORDER_ONLINE_JUMAT, isOnlineOrderOpen } from '../data';
 import { Plus } from 'lucide-react';
 import { PesananTerakhir } from '../types';
 import { buatKodePesanan } from './PesananTerkirim';
@@ -144,7 +144,7 @@ Mohon segera diproses ya!`;
         </div>
 
         <p className="text-center text-[10px] text-gray-500 mb-3 font-medium">
-          *Pemesanan online hanya dilayani pukul <strong className="text-gray-700">{`${ONLINE_ORDER_OPEN_HOUR}.00 - ${ONLINE_ORDER_CLOSE_HOUR}.00`}</strong> WIB
+          *Pemesanan online hanya dilayani pukul <strong className="text-gray-700">{JAM_ORDER_ONLINE}</strong> WIB (Jumat <strong className="text-gray-700">{JAM_ORDER_ONLINE_JUMAT}</strong>)
         </p>
 
         <button 
@@ -152,7 +152,7 @@ Mohon segera diproses ya!`;
           disabled={isCopying || !isStoreOpen}
           className={`w-full py-4 rounded-2xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 ${isCopying || !isStoreOpen ? 'bg-gray-200 text-gray-500' : 'bg-[#06402B] text-white hover:shadow-lg'}`}
         >
-          {!isStoreOpen ? `Order Online Tutup (Buka ${ONLINE_ORDER_OPEN_HOUR}.00 - ${ONLINE_ORDER_CLOSE_HOUR}.00 WIB)` : isCopying ? 'Membuka WhatsApp & Menyalin Pesanan...' : 'Pesan via WhatsApp \u2192'}
+          {!isStoreOpen ? `Order Online Tutup (Buka ${JAM_ORDER_ONLINE} WIB, Jumat ${JAM_ORDER_ONLINE_JUMAT})` : isCopying ? 'Membuka WhatsApp & Menyalin Pesanan...' : 'Pesan via WhatsApp \u2192'}
         </button>
       </div>
     </div>

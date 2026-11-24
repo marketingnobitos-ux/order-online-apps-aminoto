@@ -17,8 +17,6 @@ export interface Branch {
   name: string;
   address: string;
   mapsUrl?: string;
-  status: string;
-  hours: string;
 }
 
 export type ViewState = 'home' | 'menu' | 'cart' | 'checkout' | 'review' | 'faq' | 'terkirim';

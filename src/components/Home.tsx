@@ -1,8 +1,9 @@
 import React from 'react';
-import { BRANCHES, ADMIN_WHATSAPP, ONLINE_ORDER_OPEN_HOUR, ONLINE_ORDER_CLOSE_HOUR } from '../data';
+import { BRANCHES, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, ONLINE_ORDER_OPEN_FRIDAY, JAM_OUTLET, OUTLET_OPEN_FRIDAY, formatJam, isOutletOpen } from '../data';
 import { ArrowRight, Instagram, Facebook, MapPin, Star, Clock } from 'lucide-react';
 
 export function Home({ setView }: { setView: (v: string) => void }) {
+  const outletBuka = isOutletOpen(); // dihitung di zona Asia/Jakarta (WIB)
   return (
     <div className="flex flex-col">
       {/* Header section in Home */}
@@ -20,7 +21,7 @@ export function Home({ setView }: { setView: (v: string) => void }) {
         <div className="mt-3 flex items-center gap-1.5 text-gray-500">
           <Clock size={13} strokeWidth={2.5} className="shrink-0" />
           <span className="text-[11px] font-semibold">
-            Pemesanan online: {`${ONLINE_ORDER_OPEN_HOUR}.00 - ${ONLINE_ORDER_CLOSE_HOUR}.00`} WIB
+            Pemesanan online: {JAM_ORDER_ONLINE} WIB (Jumat mulai {formatJam(ONLINE_ORDER_OPEN_FRIDAY)})
           </span>
         </div>
       </div>
@@ -35,14 +36,15 @@ export function Home({ setView }: { setView: (v: string) => void }) {
             <div key={b.id} className="bg-white rounded-xl p-1.5 flex flex-col h-full border border-gray-200 shadow-sm relative flex-1 min-w-0">
               <div className="flex flex-col flex-1 mb-2">
                 <h3 className="font-bold text-gray-900 text-[10px] leading-snug mb-1.5 truncate">{b.name}</h3>
-                <span className="inline-flex w-max text-[8px] bg-[#D4FF00] text-[#06402B] px-1.5 py-0.5 rounded-full font-bold items-center gap-1">
-                  <span className="w-1 h-1 bg-[#06402B] rounded-full shrink-0"></span> {b.status}
+                <span className={`inline-flex w-max text-[8px] px-1.5 py-0.5 rounded-full font-bold items-center gap-1 ${outletBuka ? 'bg-[#D4FF00] text-[#06402B]' : 'bg-gray-200 text-gray-600'}`}>
+                  <span className={`w-1 h-1 rounded-full shrink-0 ${outletBuka ? 'bg-[#06402B]' : 'bg-gray-500'}`}></span> {outletBuka ? 'BUKA' : 'TUTUP'}
                 </span>
               </div>
               <div className="flex justify-between items-end border-t border-gray-100 pt-1.5 mt-auto">
                 <div className="flex flex-col overflow-hidden pr-1">
                   <span className="text-[7px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Jam Buka</span>
-                  <span className="text-[9px] font-bold text-gray-700 truncate">{b.hours}</span>
+                  <span className="text-[9px] font-bold text-gray-700 truncate">{JAM_OUTLET}</span>
+                  <span className="text-[7px] font-semibold text-gray-500 truncate">Jumat mulai {formatJam(OUTLET_OPEN_FRIDAY)}</span>
                 </div>
                 {b.mapsUrl ? (
                   <a href={b.mapsUrl} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-md bg-gray-50 border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-100 hover:text-[#06402B] hover:border-gray-300 transition-all shrink-0">
