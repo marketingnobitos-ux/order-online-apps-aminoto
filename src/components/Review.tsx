@@ -1,18 +1,23 @@
 import React from 'react';
 import { MENU_ITEMS, ADMIN_WHATSAPP, ONLINE_ORDER_OPEN_HOUR, ONLINE_ORDER_CLOSE_HOUR, isOnlineOrderOpen } from '../data';
 import { Plus } from 'lucide-react';
+import { PesananTerakhir } from '../types';
+import { buatKodePesanan } from './PesananTerkirim';
 
-export function Review({ name, whatsapp, paymentMethod, note, selectedBranch, cart, setView, clearCart, addToCart }: any) {
+export function Review({ name, whatsapp, paymentMethod, note, selectedBranch, cart, onTerkirim, addToCart }: any) {
   const [isCopying, setIsCopying] = React.useState(false);
   const total = cart.reduce((sum: number, item: any) => sum + (item.menuItem.price * item.quantity), 0);
   const isStoreOpen = isOnlineOrderOpen(); // dihitung di zona Asia/Jakarta (WIB)
 
   const handleOrder = async () => {
     if (isCopying) return;
-    
+
+    const waktuKirim = new Date();
+    const kodePesanan = buatKodePesanan(waktuKirim);
     const orderItems = cart.map((item: any) => `- ${item.quantity}x ${item.menuItem.name} ${item.variant ? `(${item.variant})` : ''} Rp ${(item.menuItem.price * item.quantity).toLocaleString('id-ID')}`).join('\n');
-    
+
     const message = `Halo Admin Aminoto, saya mau pesan:
+Kode Pesanan: ${kodePesanan}
 Nama: ${name}
 Cabang: ${selectedBranch}
 Pengantaran: Ambil Sendiri / Pesan Driver Sendiri
@@ -37,10 +42,28 @@ Mohon segera diproses ya!`;
       console.error('Failed to copy text: ', err);
     }
 
+    const pesanan: PesananTerakhir = {
+      kode: kodePesanan,
+      waktu: waktuKirim.getTime(),
+      nama: name,
+      whatsapp,
+      cabang: selectedBranch,
+      metodeBayar: paymentMethod,
+      catatan: note || '',
+      items: cart.map((item: any) => ({
+        nama: item.menuItem.name,
+        varian: item.variant,
+        jumlah: item.quantity,
+        subtotal: item.menuItem.price * item.quantity,
+      })),
+      total,
+      pesanWa: message,
+    };
+
     setTimeout(() => {
       setIsCopying(false);
-      clearCart();
-      setView('home');
+      // Simpan pesanan, kosongkan keranjang, dan pindah ke halaman Pesanan Terkirim.
+      onTerkirim(pesanan);
       // Browser HP bisa memblokir pop-up: pindah di tab yang sama supaya WhatsApp tetap terbuka.
       if (!window.open(waUrl, '_blank')) window.location.href = waUrl;
     }, 300); // Tiny delay to ensure UI updates before opening new tab

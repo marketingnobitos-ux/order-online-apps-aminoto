@@ -74,6 +74,10 @@ export const MENU_ITEMS: MenuItem[] = [
 // Nomor WhatsApp Admin. Ubah DI SINI saja; dipakai di Review & Home.
 export const ADMIN_WHATSAPP = '6288213044259';
 
+// Link undangan grup komunitas WhatsApp (https://chat.whatsapp.com/...).
+// Kosong = kartu Gabung Komunitas di halaman Pesanan Terkirim tidak ditampilkan.
+export const KOMUNITAS_WA_URL = '';
+
 // Jam layanan pemesanan online (WIB / Asia-Jakarta), 24 jam.
 // Catatan: ini jam ORDER ONLINE, terpisah dari jam fisik outlet.
 export const ONLINE_ORDER_OPEN_HOUR = 10;

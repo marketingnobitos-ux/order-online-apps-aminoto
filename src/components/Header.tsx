@@ -9,6 +9,7 @@ export function Header({ view, setView, cart }: { view: string, setView: (v: str
     if (view === 'checkout') setView('cart');
     if (view === 'review') setView('checkout');
     if (view === 'faq') setView('home');
+    if (view === 'terkirim') setView('home');
   };
 
   const cartCount = cart ? cart.reduce((acc, item) => acc + item.quantity, 0) : 0;

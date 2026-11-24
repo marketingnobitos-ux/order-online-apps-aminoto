@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ViewState, CartItem, PaymentMethod } from './types';
+import { ViewState, CartItem, PaymentMethod, PesananTerakhir } from './types';
 import { Home } from './components/Home';
 import { Menu } from './components/Menu';
 import { Cart } from './components/Cart';
@@ -9,6 +9,7 @@ import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { StickyCheckoutBar } from './components/StickyCheckoutBar';
 import { FAQ } from './components/FAQ';
+import { PesananTerkirim, bacaPesananTerakhir, simpanPesananTerakhir, hapusPesananTerakhir } from './components/PesananTerkirim';
 // Admin di-lazy load agar supabase-js tidak ikut bundle pelanggan.
 const Admin = React.lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
 
@@ -22,10 +23,23 @@ const bacaSesi = () => {
     return {};
   }
 };
+const simpanSesi = (data: object) => {
+  try {
+    sessionStorage.setItem(KUNCI_SESI, JSON.stringify(data));
+  } catch {
+    // Penyimpanan diblokir browser: app tetap jalan, hanya sesi tidak dipulihkan.
+  }
+};
 
 export default function App() {
   const [sesi] = useState(bacaSesi);
-  const [view, setView] = useState<ViewState>(sesi.view ?? 'home');
+  // Pesanan yang sudah dikirim ke WA (maks. 3 jam). Tab baru tanpa sesi langsung
+  // membuka halaman Pesanan Terkirim selama pesanan ini masih berlaku.
+  const [pesananTerakhir, setPesananTerakhir] = useState<PesananTerakhir | null>(bacaPesananTerakhir);
+  const [view, setView] = useState<ViewState>(() => {
+    const awal: ViewState = sesi.view ?? (pesananTerakhir ? 'terkirim' : 'home');
+    return awal === 'terkirim' && !pesananTerakhir ? 'home' : awal;
+  });
   const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -43,11 +57,7 @@ export default function App() {
   const [selectedBranch, setSelectedBranch] = useState<string>(sesi.selectedBranch ?? 'Aminoto Cipto');
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem(KUNCI_SESI, JSON.stringify({ view, cart, name, whatsapp, paymentMethod, note, selectedBranch }));
-    } catch {
-      // Penyimpanan diblokir browser: app tetap jalan, hanya sesi tidak dipulihkan.
-    }
+    simpanSesi({ view, cart, name, whatsapp, paymentMethod, note, selectedBranch });
   }, [view, cart, name, whatsapp, paymentMethod, note, selectedBranch]);
 
   const addToCart = (menuItem: any, variant?: string) => {
@@ -69,7 +79,21 @@ export default function App() {
     }).filter(item => item.quantity > 0));
   };
 
-  const clearCart = () => setCart([]);
+  // Dipanggil Review tepat sebelum WhatsApp dibuka. Sesi ditulis langsung (tidak menunggu
+  // useEffect) karena browser bisa meninggalkan halaman sebelum React sempat render ulang.
+  const catatPesananTerkirim = (pesanan: PesananTerakhir) => {
+    simpanPesananTerakhir(pesanan);
+    simpanSesi({ view: 'terkirim', cart: [], name, whatsapp, paymentMethod, note, selectedBranch });
+    setPesananTerakhir(pesanan);
+    setCart([]);
+    setView('terkirim');
+  };
+
+  const selesaiPesanan = () => {
+    hapusPesananTerakhir();
+    setPesananTerakhir(null);
+    setView('home');
+  };
 
   // Halaman admin terpisah dari alur customer (URL /admin, tanpa tombol di menu).
   if (window.location.pathname.startsWith('/admin')) {
@@ -104,10 +128,13 @@ export default function App() {
             <Review 
               name={name} whatsapp={whatsapp} paymentMethod={paymentMethod as PaymentMethod} 
               note={note} selectedBranch={selectedBranch} cart={cart} 
-              setView={setView} clearCart={clearCart} addToCart={addToCart}
+              onTerkirim={catatPesananTerkirim} addToCart={addToCart}
             />
           )}
           {view === 'faq' && <FAQ />}
+          {view === 'terkirim' && pesananTerakhir && (
+            <PesananTerkirim pesanan={pesananTerakhir} onSelesai={selesaiPesanan} />
+          )}
         </main>
         
         <StickyCheckoutBar cart={cart} setView={setView} view={view} />
