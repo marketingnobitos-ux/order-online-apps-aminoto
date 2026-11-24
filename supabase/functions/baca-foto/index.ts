@@ -1,4 +1,5 @@
-// Baca foto layar kasir / nota jadi daftar item, jumlah, catatan, total.
+// Baca foto layar kasir / nota jadi daftar item, jumlah, harga satuan, catatan, total.
+// Aturan "nota menang" (ADM-30): harga dari nota dipakai di laporan, bukan harga menu app.
 // Model AI lewat Sumopod (format OpenAI). Key disimpan sebagai secret SUMOPOD_API_KEY
 // (tidak pernah dikirim ke browser). Model bisa diganti lewat secret AI_MODEL.
 // Hanya admin yang login (bukan anon key) yang boleh memanggil.
@@ -35,7 +36,7 @@ Deno.serve(async (req: Request) => {
   if (!image) return json({ error: 'Field image (base64) wajib.' }, 400);
   if (image.length > 8_000_000) return json({ error: 'Foto terlalu besar.' }, 413);
 
-  const prompt = `Ini foto layar kasir atau nota pesanan rumah makan Pecel Lele Aminoto.\nBaca semua item pesanan. Cocokkan nama item ke daftar menu berikut (pakai nama PERSIS dari daftar; kalau tidak ada yang cocok, tulis nama aslinya):\n${menu.join(', ')}\nBalas HANYA JSON dengan bentuk:\n{"customer":string,"items":[{"name":string,"qty":number}],"note":string}\ncustomer = nama pemesan (di layar kasir biasanya di bawah DINE-IN / TAKE-AWAY di atas tabel), kosongkan kalau tidak ada. note = catatan pesanan, kosongkan kalau tidak ada.`;
+  const prompt = `Ini foto layar kasir atau nota pesanan rumah makan Pecel Lele Aminoto.\nBaca semua item pesanan. Cocokkan nama item ke daftar menu berikut (pakai nama PERSIS dari daftar; kalau tidak ada yang cocok, tulis nama aslinya):\n${menu.join(', ')}\nBalas HANYA JSON dengan bentuk:\n{"customer":string,"items":[{"name":string,"qty":number,"price":number|null}],"total":number|null,"note":string}\ncustomer = nama pemesan (di layar kasir biasanya di bawah DINE-IN / TAKE-AWAY di atas tabel), kosongkan kalau tidak ada. price = harga SATUAN item di nota dalam rupiah, angka bulat tanpa titik (contoh 18000); kalau nota hanya menampilkan subtotal baris, bagi dengan qty; 0 kalau item gratis; null kalau harga tidak terlihat. total = total akhir di nota dalam rupiah, null kalau tidak ada. note = catatan pesanan, kosongkan kalau tidak ada.`;
 
   const payload = JSON.stringify({
     model,
@@ -48,7 +49,7 @@ Deno.serve(async (req: Request) => {
     }],
     response_format: { type: 'json_object' },
     temperature: 0,
-    max_tokens: 500,
+    max_tokens: 800,
   });
 
   // Server AI kadang 503 (sibuk) atau 429 (limit sesaat): ulangi sampai 3x dengan jeda bertambah.

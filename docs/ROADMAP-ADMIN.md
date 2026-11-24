@@ -43,10 +43,12 @@ Status: ✅ selesai · 🟡 kode siap, belum aktif · ⏳ menunggu user · ⬜ b
 - ⬜ ADM-24 Akun admin tambahan (opsional)
 - ✅ ADM-29 Tambah order jadi wizard 4 langkah (Foto nota → Data pemesan → Pesanan → Cek nota) dengan animasi, layar sukses "Kirim input berhasil". Catatan opsional (order dari foto tanpa catatan tetap bisa disimpan). Foto terbaca langsung ke langkah 2. Commit `1e4d289`, live (bundle `index-B0Mj25Sf.js`)
 - ✅ ADM-25 Backup harian tabel `orders` aktif di VPS: `scripts/backup-orders.sh` (pg_dump 17, gzip, simpan 30 hari), cron 03:00 WIB, uji manual OK `orders-2026-10-09_1326.sql.gz`. Panduan `docs/BACKUP.md`
+- 🔶 ADM-30 Aturan "nota menang" (24 Nov 2026): harga satuan di nota menggantikan harga menu app. Item gratis boleh (harga 0, tampil "Gratis"). Wizard langkah Pesanan punya kolom "Harga satuan di nota" (kosong = harga menu). `baca-foto` kini membaca `price` per item dan `total` nota (Edge Function v18 live); kalau total hitungan beda dengan total nota, langkah Cek nota memberi peringatan (tidak memblokir). Tabel `orders` tidak berubah. Lint + build lolos. Sisa: deploy web ke VPS, uji dengan foto nota asli. Item di luar menu masih ditolak (belum dikerjakan)
 - ✅ ADM-26 UI input order dari foto: foto kamera/galeri → Baca foto → item, qty, catatan terisi (hasil contoh). Wajib: cabang, nama, WA, bayar. Catatan opsional sejak ADM-29
 
 ## Keputusan
 - Baca foto awalnya Gemini Pro, lalu diganti Sumopod (`gpt-4.1-mini`). Key hanya di backend (Supabase secrets).
+- "Nota menang" (diputuskan 30 Okt 2026, dikerjakan ADM-30): harga di nota dipakai di laporan, item gratis boleh. Mesin OCR masih terbuka: tetap Sumopod atau uji PaddleOCR.
 - Aturan CLAUDE.md "tidak memakai AI" belum diperbarui: AI dipakai khusus admin (baca foto). Perlu disetujui untuk diubah.
 
 ## Riwayat penting

@@ -16,6 +16,8 @@ const CUT_ITEMS = ['ayam negri', 'ayam kampung', 'bebek'];
 const EGG_ITEM = 'telor dadar / ceplok';
 
 const rupiah = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
+// Item gratis (harga 0 di nota) ditulis "Gratis", bukan "Rp 0".
+const hargaTampil = (n: number) => (n === 0 ? 'Gratis' : rupiah(n));
 
 // Tanggal dihitung di zona Asia/Jakarta (WIB), bukan zona perangkat.
 const dayKey = (iso: string) => new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
@@ -256,7 +258,7 @@ function DaftarOrder({ orders }: { orders: MockOrder[] }) {
             {o.items.map((i, idx) => (
               <div key={idx} className="flex justify-between gap-3">
                 <span>{i.qty}x {i.name}{i.variant ? ` (${i.variant})` : ''}</span>
-                <span className="tabular-nums shrink-0">{rupiah(i.price * i.qty)}</span>
+                <span className="tabular-nums shrink-0">{hargaTampil(i.price * i.qty)}</span>
               </div>
             ))}
             <div className="flex justify-between"><span className="text-gray-500">WhatsApp</span><span>{o.whatsapp}</span></div>
@@ -270,8 +272,10 @@ function DaftarOrder({ orders }: { orders: MockOrder[] }) {
   );
 }
 
-type DraftItem = { menuId: string; qty: number; cook: string; cut: string; egg: string };
-const itemBaru = (): DraftItem => ({ menuId: MENU_ITEMS[0].id, qty: 1, cook: '', cut: '', egg: '' });
+// hargaNota: harga satuan dari nota (null = pakai harga menu). Aturan "nota menang" (ADM-30):
+// kalau terisi, harga ini yang disimpan dan masuk laporan. 0 = item gratis.
+type DraftItem = { menuId: string; qty: number; cook: string; cut: string; egg: string; hargaNota: number | null };
+const itemBaru = (): DraftItem => ({ menuId: MENU_ITEMS[0].id, qty: 1, cook: '', cut: '', egg: '', hargaNota: null });
 
 function infoItem(it: DraftItem) {
   const menu = MENU_ITEMS.find(m => m.id === it.menuId)!;
@@ -279,11 +283,16 @@ function infoItem(it: DraftItem) {
   const butuhMasak = COOK_ITEMS.includes(n);
   const butuhPotong = CUT_ITEMS.includes(n);
   const butuhTelor = n === EGG_ITEM;
-  const harga = menu.price + (butuhMasak && it.cook === 'Bakar' ? BAKAR_EXTRA : 0);
+  const hargaMenu = menu.price + (butuhMasak && it.cook === 'Bakar' ? BAKAR_EXTRA : 0);
+  const harga = it.hargaNota ?? hargaMenu;
   const varian = butuhTelor ? it.egg : [butuhMasak ? it.cook : '', butuhPotong ? it.cut : ''].filter(Boolean).join(', ');
   const lengkap = (!butuhMasak || !!it.cook) && (!butuhPotong || !!it.cut) && (!butuhTelor || !!it.egg);
-  return { menu, butuhMasak, butuhPotong, butuhTelor, harga, varian, lengkap };
+  return { menu, butuhMasak, butuhPotong, butuhTelor, hargaMenu, harga, varian, lengkap };
 }
+
+// Angka harga dari AI: bulat, tidak negatif. Selain itu dianggap tidak terbaca (null).
+const angkaHarga = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.round(v) : null;
 
 // Kecilkan foto (sisi panjang 1024px, JPEG) lalu jadikan base64 untuk dikirim ke Edge Function.
 // Foto kecil = upload lebih cepat dan token gambar lebih sedikit, teks layar kasir tetap terbaca.
@@ -311,6 +320,7 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
   const [bayar, setBayar] = useState('');
   const [catatan, setCatatan] = useState('');
   const [items, setItems] = useState<DraftItem[]>([itemBaru()]);
+  const [totalNota, setTotalNota] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [sukses, setSukses] = useState('');
   const [langkah, setLangkah] = useState(1);
@@ -342,6 +352,7 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
     setFoto(URL.createObjectURL(file));
     setFotoFile(file);
     setSudahDibaca(false);
+    setTotalNota(null);
     setSukses('');
   };
 
@@ -362,16 +373,17 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
       }
       if (data?.error) throw new Error(data.error);
 
-      const hasil: { name: string; qty: number }[] = data.items ?? [];
+      const hasil: { name: string; qty: number; price?: unknown }[] = data.items ?? [];
       const cocok: DraftItem[] = [];
       const tidakCocok: string[] = [];
       for (const h of hasil) {
         const menu = MENU_ITEMS.find(m => normal(m.name) === normal(h.name))
           ?? MENU_ITEMS.find(m => normal(h.name).includes(normal(m.name)) || normal(m.name).includes(normal(h.name)));
-        if (menu) cocok.push({ ...itemBaru(), menuId: menu.id, qty: Math.max(1, Math.round(h.qty) || 1) });
+        if (menu) cocok.push({ ...itemBaru(), menuId: menu.id, qty: Math.max(1, Math.round(h.qty) || 1), hargaNota: angkaHarga(h.price) });
         else tidakCocok.push(h.name);
       }
       if (cocok.length) setItems(cocok);
+      setTotalNota(angkaHarga(data.total));
       if (data.note) setCatatan(String(data.note));
       if (data.customer && !nama.trim()) setNama(String(data.customer));
       setSudahDibaca(true);
@@ -414,7 +426,7 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
   const inputBaru = () => {
     setNama(''); setWa(''); setCatatan(''); setBayar(''); setItems([itemBaru()]); setError('');
     if (foto) URL.revokeObjectURL(foto);
-    setFoto(null); setFotoFile(null); setSudahDibaca(false);
+    setFoto(null); setFotoFile(null); setSudahDibaca(false); setTotalNota(null);
     setSukses(''); setLangkah(1);
   };
 
@@ -542,8 +554,16 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
                   ))}
                 </div>
               )}
+              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">
+                <span>Harga satuan di nota <span className="text-gray-400 font-normal">(kosong = harga menu {rupiah(info.hargaMenu)}, 0 = gratis)</span></span>
+                <input className={field} type="number" inputMode="numeric" min={0} step={500}
+                  value={it.hargaNota ?? ''} placeholder={String(info.hargaMenu)} aria-label={`Harga nota item ${idx + 1}`}
+                  onChange={e => setItem(idx, { hargaNota: e.target.value === '' ? null : Math.max(0, Math.round(Number(e.target.value)) || 0) })} />
+              </label>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-gray-500">Subtotal <strong className="text-gray-900">{rupiah(info.harga * it.qty)}</strong></span>
+                <span className="text-gray-500">Subtotal <strong className="text-gray-900">{hargaTampil(info.harga * it.qty)}</strong>
+                  {it.hargaNota !== null && it.hargaNota !== info.hargaMenu && <span className="ml-1.5 text-[#A35A08] font-semibold">harga nota</span>}
+                </span>
                 {items.length > 1 && (
                   <button type="button" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} className="font-bold text-red-500">Hapus</button>
                 )}
@@ -575,12 +595,17 @@ function TambahOrder({ onSave }: { onSave: (o: MockOrder) => Promise<string | nu
             return (
               <div key={idx} className="flex justify-between gap-2">
                 <span>{it.qty}× {info.menu.name}{info.varian ? ` (${info.varian})` : ''}</span>
-                <span className="font-semibold shrink-0">{rupiah(info.harga * it.qty)}</span>
+                <span className="font-semibold shrink-0">{hargaTampil(info.harga * it.qty)}</span>
               </div>
             );
           })}
         </div>
         <div className="flex justify-between font-bold text-[#06402B]"><span>Total</span><span>{rupiah(total)}</span></div>
+        {totalNota !== null && totalNota !== total && (
+          <p className="text-xs font-medium text-[#A35A08] bg-[#FFF7E6] rounded-xl p-3">
+            Total di nota {rupiah(totalNota)}, beda {rupiah(Math.abs(totalNota - total))}. Cek harga atau jumlah item di langkah Pesanan.
+          </p>
+        )}
         <p className="text-xs text-gray-500">Catatan: {catatan.trim() || '-'}</p>
       </section>
       )}
