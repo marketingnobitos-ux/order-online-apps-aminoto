@@ -71,9 +71,9 @@ export const MENU_ITEMS: MenuItem[] = [
 // Nomor WhatsApp Admin. Ubah DI SINI saja; dipakai di Review & Home.
 export const ADMIN_WHATSAPP = '6288213044259';
 
-// Link undangan grup komunitas WhatsApp (https://chat.whatsapp.com/...).
-// Kosong = kartu Gabung Komunitas di halaman Pesanan Terkirim tidak ditampilkan.
-export const KOMUNITAS_WA_URL = '';
+// Link Saluran WhatsApp (channel) #WargaAminoto. Dipakai pita "Gabung" di Home dan kartu
+// ajakan di halaman Pesanan Terkirim. Kosong = keduanya tidak ditampilkan.
+export const KOMUNITAS_WA_URL = 'https://www.whatsapp.com/channel/0029VbD8HhwCxoAvHkviC43D';
 
 // Review ASLI dari Google Maps untuk bagian "Kata #WargaAminoto" di Home.
 // Jangan isi dengan review karangan. Kosong = bagian itu disembunyikan.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BRANCHES, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, ONLINE_ORDER_OPEN_FRIDAY, JAM_OUTLET, OUTLET_OPEN_FRIDAY, ULASAN, formatJam, isOutletOpen } from '../data';
+import { BRANCHES, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, ONLINE_ORDER_OPEN_FRIDAY, JAM_OUTLET, OUTLET_OPEN_FRIDAY, ULASAN, KOMUNITAS_WA_URL, formatJam, isOutletOpen } from '../data';
 import { ArrowRight, Instagram, Facebook, MapPin, Star, Clock, RotateCcw } from 'lucide-react';
 import { PesanUlang } from '../pesanUlang';
 
@@ -129,6 +129,7 @@ export function Home({ setView, pesanUlang, onPesanLagi }: {
       </div>
 
       {/* Information Banner (Capsule) */}
+      {KOMUNITAS_WA_URL && (
       <div className="px-5 mb-8">
         <div className="bg-[#06402B] rounded-full py-2 px-4 text-white flex flex-row items-center justify-between relative overflow-hidden shadow-sm">
           <div className="absolute right-0 top-1/2 -translate-y-1/2 w-16 h-16 bg-[#D4FF00] opacity-10 rounded-full -mr-4"></div>
@@ -136,11 +137,12 @@ export function Home({ setView, pesanUlang, onPesanLagi }: {
             <h2 className="text-[9px] font-bold text-[#D4FF00] tracking-wider uppercase mb-0.5">#WargaAminoto</h2>
             <p className="text-[11px] font-semibold leading-tight text-white/90">Info promo & menu baru</p>
           </div>
-          <a href="https://whatsapp.com/channel/0029VbD8HhwCxoAvHkviC43D" target="_blank" rel="noopener noreferrer" className="z-10 bg-[#D4FF00] text-[#06402B] px-4 py-1.5 rounded-full font-bold text-[10px] shadow-sm hover:bg-[#cbf200] transition-colors whitespace-nowrap shrink-0">
+          <a href={KOMUNITAS_WA_URL} target="_blank" rel="noopener noreferrer" className="z-10 bg-[#D4FF00] text-[#06402B] px-4 py-1.5 rounded-full font-bold text-[10px] shadow-sm hover:bg-[#cbf200] transition-colors whitespace-nowrap shrink-0">
             Gabung &rarr;
           </a>
         </div>
       </div>
+      )}
 
       {/* Kata #WargaAminoto: hanya review asli dari Google Maps (ULASAN di data.ts).
           Kosong = bagian ini disembunyikan. */}

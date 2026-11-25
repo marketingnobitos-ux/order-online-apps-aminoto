@@ -174,9 +174,9 @@ export function PesananTerkirim({ pesanan, onSelesai }: { pesanan: PesananTerakh
                 <Users size={22} strokeWidth={2.5} />
               </div>
               <div>
-                <p className="font-bold text-[15px] text-[#D4FF00]">Gabung Komunitas Aminoto</p>
+                <p className="font-bold text-[15px] text-[#D4FF00]">Ikuti #WargaAminoto</p>
                 <p className="text-xs text-white/85 mt-0.5 leading-relaxed">
-                  Info menu baru, promo khusus member, dan kabar outlet duluan.
+                  Info promo, menu baru, dan kabar outlet duluan lewat Saluran WhatsApp.
                 </p>
               </div>
             </div>
@@ -186,7 +186,7 @@ export function PesananTerkirim({ pesanan, onSelesai }: { pesanan: PesananTerakh
               rel="noopener noreferrer"
               className="mt-3 flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#D4FF00] text-[#06402B] font-bold text-sm"
             >
-              <MessageCircle size={18} strokeWidth={2.5} /> Masuk grup komunitas
+              <MessageCircle size={18} strokeWidth={2.5} /> Ikuti Saluran WhatsApp
             </a>
           </div>
         )}
