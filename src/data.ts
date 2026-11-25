@@ -80,6 +80,10 @@ export const KOMUNITAS_WA_URL = '';
 // Contoh: { teks: 'Sambelnya mantap...', nama: 'Nama di Google', cabang: 'Cipto', bintang: 5 }
 export const ULASAN: { teks: string; nama: string; cabang: string; bintang: number }[] = [];
 
+// Saran "tambah ini yuk" di halaman Review (id menu, urut prioritas). Yang sudah ada di
+// keranjang dilewati; maksimal 3 yang tampil. Jangan isi menu yang perlu pilih varian.
+export const SARAN_TAMBAHAN = ['m24', 'm12', 'd3', 'm8'];
+
 // Tambahan harga kalau ikan / ayam / bebek dibakar (bukan digoreng).
 export const BIAYA_BAKAR = 2000;
 

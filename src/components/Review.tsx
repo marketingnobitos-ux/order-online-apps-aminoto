@@ -1,11 +1,28 @@
 import React from 'react';
-import { MENU_ITEMS, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, JAM_ORDER_ONLINE_JUMAT, isOnlineOrderOpen } from '../data';
-import { Plus } from 'lucide-react';
-import { PesananTerakhir } from '../types';
+import { MENU_ITEMS, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, JAM_ORDER_ONLINE_JUMAT, SARAN_TAMBAHAN, isOnlineOrderOpen } from '../data';
+import { Plus, Check } from 'lucide-react';
+import { MenuItem, PesananTerakhir } from '../types';
 import { buatKodePesanan } from './PesananTerkirim';
 
 export function Review({ name, whatsapp, paymentMethod, note, selectedBranch, cart, onTerkirim, addToCart }: any) {
   const [isCopying, setIsCopying] = React.useState(false);
+
+  // Saran tambahan: maks. 3 menu dari SARAN_TAMBAHAN yang belum ada di keranjang.
+  const saran = SARAN_TAMBAHAN
+    .filter(id => !cart.some((c: any) => c.menuItem.id === id))
+    .map(id => MENU_ITEMS.find(m => m.id === id))
+    .filter((m): m is MenuItem => !!m)
+    .slice(0, 3);
+
+  const [notif, setNotif] = React.useState<{ teks: string; id: number } | null>(null);
+  const timerNotif = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  React.useEffect(() => () => clearTimeout(timerNotif.current), []);
+  const tambahSaran = (item: MenuItem) => {
+    addToCart(item);
+    clearTimeout(timerNotif.current);
+    setNotif({ teks: `${item.name} ditambahkan`, id: Date.now() });
+    timerNotif.current = setTimeout(() => setNotif(null), 1500);
+  };
   const total = cart.reduce((sum: number, item: any) => sum + (item.menuItem.price * item.quantity), 0);
   const isStoreOpen = isOnlineOrderOpen(); // dihitung di zona Asia/Jakarta (WIB)
 
@@ -83,7 +100,7 @@ Mohon segera diproses ya!`;
           </div>
           
           <div className="flex flex-col border-b-2 border-dashed border-gray-200 pb-5">
-            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2">Informasi Pengiriman</span>
+            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2">Informasi Pemesan</span>
             <span className="font-bold text-gray-900 text-lg mb-1 capitalize">{name.toLowerCase()}</span>
             <span className="text-sm text-gray-600 font-medium">{whatsapp}</span>
             <span className="text-[11px] text-gray-700 mt-3 font-semibold bg-white px-3 py-2 rounded-xl w-fit border border-gray-200 shadow-sm">
@@ -117,17 +134,18 @@ Mohon segera diproses ya!`;
 
         </div>
         
-        {/* Rekomendasi Tambahan */}
+        {/* Rekomendasi Tambahan (hilang kalau semua saran sudah ada di keranjang) */}
+        {saran.length > 0 && (
         <div className="flex flex-col gap-3 mt-2">
           <span className="font-bold text-gray-900 text-sm">Biar makin mantap, tambah ini yuk:</span>
           <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2 w-full pr-5">
-            {MENU_ITEMS.filter(item => ['t17', 't14', 'd2'].includes(item.id)).map(item => (
+            {saran.map(item => (
               <div key={`rec-${item.id}`} className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm w-40 flex flex-col gap-2 shrink-0">
                 <span className="font-bold text-sm text-gray-900 leading-tight font-sans">{item.name}</span>
                 <span className="font-bold text-[#06402B] text-xs font-sans">Rp {item.price.toLocaleString('id-ID')}</span>
-                <button 
-                  onClick={() => addToCart(item)}
-                  className="mt-2 w-full py-2 bg-[#06402B] text-white hover:bg-[#042d1e] rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-1 shadow-sm"
+                <button
+                  onClick={() => tambahSaran(item)}
+                  className="mt-auto w-full py-2 bg-[#06402B] text-white hover:bg-[#042d1e] rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-1 shadow-sm"
                 >
                   <Plus size={14} strokeWidth={3} /> Tambah
                 </button>
@@ -135,7 +153,21 @@ Mohon segera diproses ya!`;
             ))}
           </div>
         </div>
+        )}
       </div>
+
+      {notif && (
+        <div
+          key={notif.id}
+          role="status"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] w-max max-w-[85vw] flex items-center gap-2 bg-[#06402B] text-white text-[13px] font-semibold pl-2 pr-4 py-2 rounded-full shadow-lg animate-notif"
+        >
+          <span className="w-6 h-6 rounded-full bg-[#D4FF00] flex items-center justify-center text-[#06402B] shrink-0">
+            <Check size={14} strokeWidth={3} />
+          </span>
+          <span className="truncate">{notif.teks}</span>
+        </div>
+      )}
 
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-100 p-5 pb-28 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
         <div className="flex justify-between items-center mb-3">
