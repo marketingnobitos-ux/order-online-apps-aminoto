@@ -35,7 +35,8 @@ Home → (pilih cabang di Menu) → Menu → Keranjang → Checkout (nama, WA, m
 
 ## Konfigurasi terpusat (src/data.ts)
 - `ADMIN_WHATSAPP` — nomor WA admin. Ubah **di sini saja**.
-- `KOMUNITAS_WA_URL` — link undangan grup komunitas WA (kosong = kartu komunitas disembunyikan).
+- `KOMUNITAS_WA_URL` — link Saluran WhatsApp (channel) #WargaAminoto, dipakai pita "Gabung" di Home
+  dan kartu "Ikuti #WargaAminoto" di Pesanan Terkirim (kosong = keduanya disembunyikan).
 - Jam buka dalam menit sejak 00.00 WIB, sama untuk semua cabang:
   - `OUTLET_OPEN` / `OUTLET_OPEN_FRIDAY` / `OUTLET_CLOSE` — outlet 10.00–22.00, Jumat mulai 12.45.
   - `ONLINE_ORDER_OPEN` / `ONLINE_ORDER_OPEN_FRIDAY` / `ONLINE_ORDER_CLOSE` — order online
