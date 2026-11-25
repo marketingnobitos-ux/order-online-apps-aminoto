@@ -11,6 +11,12 @@ import { StickyCheckoutBar } from './components/StickyCheckoutBar';
 import { FAQ } from './components/FAQ';
 import { PesananTerkirim, bacaPesananTerakhir, simpanPesananTerakhir, hapusPesananTerakhir } from './components/PesananTerkirim';
 import { bacaPelanggan, simpanPelanggan, hapusPelanggan, bacaPesanUlang, simpanPesanUlang, PesanUlang } from './pesanUlang';
+import { adaVersiBaru, muatUlangKeVersiBaru } from './cekVersi';
+import { RefreshCw } from 'lucide-react';
+
+// Halaman yang aman dimuat ulang otomatis (pelanggan tidak sedang mengisi pesanan).
+const AMAN_DIMUAT_ULANG: ViewState[] = ['home', 'terkirim', 'faq'];
+const JEDA_CEK_VERSI_MS = 60 * 1000;
 // Admin di-lazy load agar supabase-js tidak ikut bundle pelanggan.
 const Admin = React.lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
 
@@ -63,6 +69,32 @@ export default function App() {
   useEffect(() => {
     simpanSesi({ view, cart, name, whatsapp, paymentMethod, note, selectedBranch });
   }, [view, cart, name, whatsapp, paymentMethod, note, selectedBranch]);
+
+  // Versi baru setelah deploy: dicek saat pelanggan kembali ke tab (mis. dari WhatsApp)
+  // dan tiap 5 menit selama tab terbuka. Bukan untuk halaman admin.
+  const [versiBaru, setVersiBaru] = useState(false);
+  const cekTerakhir = useRef(0);
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/admin')) return;
+    const cek = async () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - cekTerakhir.current < JEDA_CEK_VERSI_MS) return;
+      cekTerakhir.current = Date.now();
+      if (await adaVersiBaru()) setVersiBaru(true);
+    };
+    document.addEventListener('visibilitychange', cek);
+    const t = setInterval(cek, 5 * 60 * 1000);
+    return () => {
+      document.removeEventListener('visibilitychange', cek);
+      clearInterval(t);
+    };
+  }, []);
+
+  // Di Beranda / Pesanan Terkirim / FAQ langsung muat ulang; di tengah pesan tampilkan pita.
+  // Keranjang & isian aman karena tersimpan di sessionStorage.
+  useEffect(() => {
+    if (versiBaru && AMAN_DIMUAT_ULANG.includes(view)) muatUlangKeVersiBaru();
+  }, [versiBaru, view]);
 
   const addToCart = (menuItem: any, variant?: string) => {
     setCart(prev => {
@@ -141,7 +173,16 @@ export default function App() {
     <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-gray-50 items-center justify-center">
       <div className="flex flex-col h-full w-full max-w-md bg-[#FDFBF7] shadow-xl relative overflow-hidden">
         <Header view={view} setView={setView} cart={cart} />
-        
+        {versiBaru && !AMAN_DIMUAT_ULANG.includes(view) && (
+          <button
+            onClick={muatUlangKeVersiBaru}
+            className="shrink-0 w-full flex items-center justify-center gap-2 bg-[#06402B] text-white text-[12px] font-semibold py-2 px-4"
+          >
+            <RefreshCw size={14} strokeWidth={2.5} className="text-[#D4FF00]" />
+            Versi baru tersedia · <span className="font-bold text-[#D4FF00] underline underline-offset-2">Muat ulang</span>
+          </button>
+        )}
+
         <main ref={mainRef} className="flex-1 overflow-y-auto w-full relative pb-24">
           {view === 'home' && <Home setView={setView} pesanUlang={pesanUlang} onPesanLagi={pesanLagi} />}
           {view === 'menu' && (
