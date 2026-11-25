@@ -111,7 +111,12 @@ export default function App() {
         
         <main ref={mainRef} className="flex-1 overflow-y-auto w-full relative pb-24">
           {view === 'home' && <Home setView={setView} />}
-          {view === 'menu' && <Menu addToCart={addToCart} selectedBranch={selectedBranch} setSelectedBranch={setSelectedBranch} />}
+          {view === 'menu' && (
+            <Menu
+              addToCart={addToCart} updateQuantity={updateQuantity} cart={cart}
+              selectedBranch={selectedBranch} setSelectedBranch={setSelectedBranch}
+            />
+          )}
           {view === 'cart' && <Cart cart={cart} updateQuantity={updateQuantity} setView={setView} />}
           {view === 'checkout' && (
             <Checkout 

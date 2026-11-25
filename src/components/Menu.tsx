@@ -1,39 +1,74 @@
-import React, { useState, useMemo } from 'react';
-import { MENU_ITEMS, BRANCHES } from '../data';
-import { Search, Plus } from 'lucide-react';
-import { MenuItem } from '../types';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { MENU_ITEMS, BRANCHES, KELOMPOK_MENU } from '../data';
+import { Search, Plus, Minus, Check } from 'lucide-react';
+import { MenuItem, CartItem } from '../types';
 
-const TABS = ['Semua', 'Makanan', 'Minuman'];
+const TABS = ['Semua', ...KELOMPOK_MENU];
 
-export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCart: (item: MenuItem, variant?: string) => void; selectedBranch: string; setSelectedBranch: (v: string) => void; }) {
+// Menu yang harus memilih varian (cara masak / potongan / jenis telor) sebelum masuk keranjang.
+const punyaVarian = (item: MenuItem) =>
+  ['gurame', 'nila', 'ayam negri', 'ayam kampung', 'bebek', 'telor dadar / ceplok'].includes(item.name.toLowerCase());
+
+export function Menu({ addToCart, updateQuantity, cart, selectedBranch, setSelectedBranch }: {
+  addToCart: (item: MenuItem, variant?: string) => void;
+  updateQuantity: (id: string, variant: string | undefined, delta: number) => void;
+  cart: CartItem[];
+  selectedBranch: string;
+  setSelectedBranch: (v: string) => void;
+}) {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Semua');
-  
+
   const [variantModalItem, setVariantModalItem] = useState<MenuItem | null>(null);
   const [selectedCooking, setSelectedCooking] = useState<string | null>(null);
   const [selectedCut, setSelectedCut] = useState<string | null>(null);
   const [selectedEgg, setSelectedEgg] = useState<string | null>(null);
 
+  // Notif singkat setelah item masuk keranjang.
+  const [notif, setNotif] = useState<{ teks: string; id: number } | null>(null);
+  const timerNotif = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timerNotif.current), []);
+
+  const tampilkanNotif = (teks: string) => {
+    clearTimeout(timerNotif.current);
+    setNotif({ teks, id: Date.now() });
+    timerNotif.current = setTimeout(() => setNotif(null), 1500);
+    try {
+      navigator.vibrate?.(15); // Android saja; Safari iOS tidak punya getar.
+    } catch {
+      // Abaikan: getar hanya pemanis.
+    }
+  };
+
+  // Jumlah per menu di keranjang (semua varian dijumlahkan).
+  const jumlahDiKeranjang = useMemo(() => {
+    const map = new Map<string, number>();
+    cart.forEach(c => map.set(c.menuItem.id, (map.get(c.menuItem.id) ?? 0) + c.quantity));
+    return map;
+  }, [cart]);
+
   const filteredMenu = useMemo(() => {
+    const kata = search.toLowerCase();
     return MENU_ITEMS.filter(item => {
-      const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || (item.description && item.description.toLowerCase().includes(search.toLowerCase()));
-      const matchTab = activeTab === 'Semua' || item.category === activeTab;
+      const matchSearch = item.name.toLowerCase().includes(kata) || (item.description && item.description.toLowerCase().includes(kata));
+      const matchTab = activeTab === 'Semua' || item.kelompok === activeTab;
       return matchSearch && matchTab;
     });
   }, [search, activeTab]);
 
-  const handleAddClick = (item: MenuItem) => {
-    const nameLower = item.name.toLowerCase();
-    const needsVariant = ['gurame', 'nila', 'ayam negri', 'ayam kampung', 'bebek'].includes(nameLower);
-    const isTelor = nameLower === 'telor dadar / ceplok';
+  const tambahLangsung = (item: MenuItem) => {
+    addToCart(item);
+    tampilkanNotif(`${item.name} ditambahkan`);
+  };
 
-    if (needsVariant || isTelor) {
+  const handleAddClick = (item: MenuItem) => {
+    if (punyaVarian(item)) {
       setVariantModalItem(item);
       setSelectedCooking(null);
       setSelectedCut(null);
       setSelectedEgg(null);
     } else {
-      addToCart(item);
+      tambahLangsung(item);
     }
   };
 
@@ -79,34 +114,69 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
       </div>
 
       <div className="px-5 flex flex-col mt-4">
-        {TABS.filter(c => c !== 'Semua').map(category => {
-          const categoryItems = filteredMenu.filter(item => item.category === category);
-          
+        {KELOMPOK_MENU.map(kelompok => {
+          const categoryItems = filteredMenu.filter(item => item.kelompok === kelompok);
+
           if (categoryItems.length === 0) return null;
 
           return (
-            <div key={category} className="mb-6 last:mb-0">
-              <h2 className="text-lg font-bold text-gray-900 mb-3">{category}</h2>
+            <div key={kelompok} className="mb-6 last:mb-0">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">{kelompok}</h2>
               <div className="flex flex-col gap-3">
-                {categoryItems.map(item => (
-                  <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex justify-between items-stretch gap-3">
+                {categoryItems.map(item => {
+                  const jumlah = jumlahDiKeranjang.get(item.id) ?? 0;
+                  const varian = punyaVarian(item);
+                  return (
+                  <div key={item.id} className={`bg-white p-4 rounded-xl border shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex justify-between items-stretch gap-3 transition-colors ${jumlah > 0 ? 'border-[#06402B]' : 'border-gray-200'}`}>
                     <div className="flex flex-col flex-1 justify-between min-h-[76px]">
                       <div className="mb-2">
+                        {item.favorit && (
+                          <span className="inline-block bg-[#D4FF00] text-[#06402B] text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-full mb-1.5">
+                            Favorit
+                          </span>
+                        )}
                         <span className="text-[15px] font-bold text-gray-900 leading-tight block">{item.name}</span>
                         {item.description && <span className="text-[13px] font-medium text-gray-500 mt-1 leading-snug block">{item.description}</span>}
                       </div>
-                      <span className="font-bold text-[#06402B] text-[15px] mt-auto block">Rp {item.price.toLocaleString('id-ID')}</span>
+                      <div className="mt-auto">
+                        <span className="font-bold text-[#06402B] text-[15px] block">Rp {item.price.toLocaleString('id-ID')}</span>
+                        {varian && jumlah > 0 && (
+                          <span className="text-[11px] font-semibold text-gray-500 block mt-0.5">{jumlah} di keranjang</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-end justify-end flex-shrink-0">
-                      <button 
-                        onClick={() => handleAddClick(item)}
-                        className="w-9 h-9 rounded-full bg-[#06402B] flex items-center justify-center text-[#D4FF00] shadow-sm hover:shadow-md active:scale-95 transition-all"
-                      >
-                        <Plus size={20} strokeWidth={2.5} />
-                      </button>
+                      {!varian && jumlah > 0 ? (
+                        <div className="flex items-center gap-1 bg-[#06402B] rounded-full p-1 shadow-sm">
+                          <button
+                            onClick={() => updateQuantity(item.id, undefined, -1)}
+                            aria-label={`Kurangi ${item.name}`}
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"
+                          >
+                            <Minus size={16} strokeWidth={2.75} />
+                          </button>
+                          <span className="min-w-[20px] text-center text-sm font-bold text-[#D4FF00]">{jumlah}</span>
+                          <button
+                            onClick={() => tambahLangsung(item)}
+                            aria-label={`Tambah ${item.name}`}
+                            className="w-7 h-7 rounded-full bg-[#D4FF00] flex items-center justify-center text-[#06402B] active:scale-90 transition-transform"
+                          >
+                            <Plus size={16} strokeWidth={2.75} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleAddClick(item)}
+                          aria-label={`Tambah ${item.name}`}
+                          className="w-9 h-9 rounded-full bg-[#06402B] flex items-center justify-center text-[#D4FF00] shadow-sm hover:shadow-md active:scale-95 transition-all"
+                        >
+                          <Plus size={20} strokeWidth={2.5} />
+                        </button>
+                      )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
@@ -129,6 +199,19 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
 
       {/* Spacer to prevent content from being hidden behind Bottom Nav & Floating Cart */}
       <div className="h-48 w-full shrink-0"></div>
+
+      {notif && (
+        <div
+          key={notif.id}
+          role="status"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] w-max max-w-[85vw] flex items-center gap-2 bg-[#06402B] text-white text-[13px] font-semibold pl-2 pr-4 py-2 rounded-full shadow-lg animate-notif"
+        >
+          <span className="w-6 h-6 rounded-full bg-[#D4FF00] flex items-center justify-center text-[#06402B] shrink-0">
+            <Check size={14} strokeWidth={3} />
+          </span>
+          <span className="truncate">{notif.teks}</span>
+        </div>
+      )}
 
       {variantModalItem && (() => {
         const nameLower = variantModalItem.name.toLowerCase();
@@ -216,6 +299,7 @@ export function Menu({ addToCart, selectedBranch, setSelectedBranch }: { addToCa
                         ? selectedEgg
                         : (needsCut ? `${selectedCooking}, ${selectedCut}` : selectedCooking);
                       addToCart(finalItem, variantString as string);
+                      tampilkanNotif(`${variantModalItem.name} (${variantString}) ditambahkan`);
                       setVariantModalItem(null);
                     }
                   }}

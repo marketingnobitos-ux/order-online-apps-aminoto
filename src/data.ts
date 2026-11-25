@@ -1,4 +1,4 @@
-import { Branch, MenuItem } from './types';
+import { Branch, KelompokMenu, MenuItem } from './types';
 
 export const BRANCHES: Branch[] = [
   {
@@ -21,47 +21,50 @@ export const BRANCHES: Branch[] = [
   }
 ];
 
+// Urutan tab sub-kategori di halaman Menu.
+export const KELOMPOK_MENU: KelompokMenu[] = ['Lauk Utama', 'Nasi & Pelengkap', 'Sate & Jeroan', 'Sambal', 'Sayur', 'Minuman'];
+
 export const MENU_ITEMS: MenuItem[] = [
   // Makanan
-  { id: 'm23', name: 'Nasi Putih', price: 5000, category: 'Makanan' },
-  { id: 'm1', name: 'Pecel Lele', price: 18000, category: 'Makanan' },
-  { id: 'm2', name: 'Ayam Negri', price: 23000, category: 'Makanan' },
-  { id: 'm3', name: 'Ayam Kampung', price: 30000, category: 'Makanan' },
-  { id: 'm4', name: 'Bebek', price: 33000, category: 'Makanan' },
-  { id: 'm5', name: 'Nila', price: 25000, category: 'Makanan' },
-  { id: 'm6', name: 'Gurame', price: 30000, category: 'Makanan' },
-  { id: 'm7', name: 'Tahu', price: 3000, category: 'Makanan' },
-  { id: 'm8', name: 'Tempe', price: 3000, category: 'Makanan' },
-  { id: 'm9', name: 'Sayur Asem', price: 7000, category: 'Makanan' },
-  { id: 'm10', name: 'Sambal Korek', price: 7000, category: 'Makanan' },
-  { id: 'm11', name: 'Sambel Bawang', price: 7000, category: 'Makanan' },
-  { id: 'm12', name: 'Sambel Dadak Xtra', price: 10000, category: 'Makanan' },
-  { id: 'm13', name: 'Ati Ampela', price: 10000, category: 'Makanan' },
-  { id: 'm14', name: 'Kepala Ayam', price: 7000, category: 'Makanan' },
-  { id: 'm15', name: 'Cumi Asin', price: 10000, category: 'Makanan' },
-  { id: 'm16', name: 'Sate Usus', price: 5000, category: 'Makanan' },
-  { id: 'm17', name: 'Sate Kulit', price: 7000, category: 'Makanan' },
-  { id: 'm18', name: 'Pete', price: 15000, category: 'Makanan' },
-  { id: 'm19', name: 'Telor Dadar / Ceplok', price: 7000, category: 'Makanan' },
-  { id: 'm20', name: 'Kol Goreng', price: 6000, category: 'Makanan' },
-  { id: 'm21', name: 'Jukut Goreng', price: 8000, category: 'Makanan' },
-  { id: 'm22', name: 'Pencok Katel', price: 8000, category: 'Makanan' },
-  { id: 'm24', name: 'Krupuk 1 Bungkus', price: 5000, category: 'Makanan' },
+  { id: 'm23', name: 'Nasi Putih', price: 5000, category: 'Makanan', kelompok: 'Nasi & Pelengkap' },
+  { id: 'm1', name: 'Pecel Lele', price: 18000, category: 'Makanan', kelompok: 'Lauk Utama', favorit: true },
+  { id: 'm2', name: 'Ayam Negri', price: 23000, category: 'Makanan', kelompok: 'Lauk Utama' },
+  { id: 'm3', name: 'Ayam Kampung', price: 30000, category: 'Makanan', kelompok: 'Lauk Utama', favorit: true },
+  { id: 'm4', name: 'Bebek', price: 33000, category: 'Makanan', kelompok: 'Lauk Utama' },
+  { id: 'm5', name: 'Nila', price: 25000, category: 'Makanan', kelompok: 'Lauk Utama' },
+  { id: 'm6', name: 'Gurame', price: 30000, category: 'Makanan', kelompok: 'Lauk Utama' },
+  { id: 'm7', name: 'Tahu', price: 3000, category: 'Makanan', kelompok: 'Nasi & Pelengkap' },
+  { id: 'm8', name: 'Tempe', price: 3000, category: 'Makanan', kelompok: 'Nasi & Pelengkap' },
+  { id: 'm9', name: 'Sayur Asem', price: 7000, category: 'Makanan', kelompok: 'Sayur' },
+  { id: 'm10', name: 'Sambal Korek', price: 7000, category: 'Makanan', kelompok: 'Sambal' },
+  { id: 'm11', name: 'Sambel Bawang', price: 7000, category: 'Makanan', kelompok: 'Sambal' },
+  { id: 'm12', name: 'Sambel Dadak Xtra', price: 10000, category: 'Makanan', kelompok: 'Sambal', favorit: true },
+  { id: 'm13', name: 'Ati Ampela', price: 10000, category: 'Makanan', kelompok: 'Sate & Jeroan' },
+  { id: 'm14', name: 'Kepala Ayam', price: 7000, category: 'Makanan', kelompok: 'Sate & Jeroan' },
+  { id: 'm15', name: 'Cumi Asin', price: 10000, category: 'Makanan', kelompok: 'Sate & Jeroan' },
+  { id: 'm16', name: 'Sate Usus', price: 5000, category: 'Makanan', kelompok: 'Sate & Jeroan' },
+  { id: 'm17', name: 'Sate Kulit', price: 7000, category: 'Makanan', kelompok: 'Sate & Jeroan' },
+  { id: 'm18', name: 'Pete', price: 15000, category: 'Makanan', kelompok: 'Nasi & Pelengkap' },
+  { id: 'm19', name: 'Telor Dadar / Ceplok', price: 7000, category: 'Makanan', kelompok: 'Nasi & Pelengkap' },
+  { id: 'm20', name: 'Kol Goreng', price: 6000, category: 'Makanan', kelompok: 'Sayur' },
+  { id: 'm21', name: 'Jukut Goreng', price: 8000, category: 'Makanan', kelompok: 'Sayur' },
+  { id: 'm22', name: 'Pencok Katel', price: 8000, category: 'Makanan', kelompok: 'Sayur' },
+  { id: 'm24', name: 'Krupuk 1 Bungkus', price: 5000, category: 'Makanan', kelompok: 'Nasi & Pelengkap' },
 
   // Minuman
-  { id: 'd13', name: 'Teh Manis Hangat', price: 5000, category: 'Minuman' },
-  { id: 'd1', name: 'Tawar Hangat', price: 3000, category: 'Minuman' },
-  { id: 'd2', name: 'Es Teh Tawar', price: 3000, category: 'Minuman' },
-  { id: 'd3', name: 'Es Teh Manis', price: 5000, category: 'Minuman' },
-  { id: 'd4', name: 'Es Jeruk', price: 10000, category: 'Minuman' },
-  { id: 'd5', name: 'Jeruk Panas', price: 7000, category: 'Minuman' },
-  { id: 'd6', name: 'Air Mineral', price: 5000, category: 'Minuman' },
-  { id: 'd7', name: 'Samore', price: 8000, category: 'Minuman' },
-  { id: 'd8', name: 'Kopi Sunyaragi', price: 15000, category: 'Minuman' },
-  { id: 'd9', name: 'Teh Pucuk', price: 5000, category: 'Minuman' },
-  { id: 'd10', name: 'Nipis Madu', price: 7000, category: 'Minuman' },
-  { id: 'd11', name: 'Es Teh Kampul', price: 8000, category: 'Minuman' },
-  { id: 'd12', name: 'Es Tjampolay', price: 8000, category: 'Minuman' }
+  { id: 'd13', name: 'Teh Manis Hangat', price: 5000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd1', name: 'Tawar Hangat', price: 3000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd2', name: 'Es Teh Tawar', price: 3000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd3', name: 'Es Teh Manis', price: 5000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd4', name: 'Es Jeruk', price: 10000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd5', name: 'Jeruk Panas', price: 7000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd6', name: 'Air Mineral', price: 5000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd7', name: 'Samore', price: 8000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd8', name: 'Kopi Sunyaragi', price: 15000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd9', name: 'Teh Pucuk', price: 5000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd10', name: 'Nipis Madu', price: 7000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd11', name: 'Es Teh Kampul', price: 8000, category: 'Minuman', kelompok: 'Minuman' },
+  { id: 'd12', name: 'Es Tjampolay', price: 8000, category: 'Minuman', kelompok: 'Minuman' }
 ];
 
 // ── Konfigurasi terpusat ──────────────────────────────────────────

@@ -1,9 +1,15 @@
+// Sub-kategori yang tampil sebagai tab di halaman Menu pelanggan.
+export type KelompokMenu = 'Lauk Utama' | 'Nasi & Pelengkap' | 'Sate & Jeroan' | 'Sambal' | 'Sayur' | 'Minuman';
+
 export interface MenuItem {
   id: string;
   name: string;
   description?: string;
   price: number;
+  // Kategori lama, masih dipakai halaman Admin.
   category: 'Makanan' | 'Minuman';
+  kelompok: KelompokMenu;
+  favorit?: boolean;
 }
 
 export interface CartItem {
