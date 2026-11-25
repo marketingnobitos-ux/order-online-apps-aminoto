@@ -1,5 +1,5 @@
 import React from 'react';
-import { BRANCHES, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, ONLINE_ORDER_OPEN_FRIDAY, JAM_OUTLET, OUTLET_OPEN_FRIDAY, formatJam, isOutletOpen } from '../data';
+import { BRANCHES, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, ONLINE_ORDER_OPEN_FRIDAY, JAM_OUTLET, OUTLET_OPEN_FRIDAY, ULASAN, formatJam, isOutletOpen } from '../data';
 import { ArrowRight, Instagram, Facebook, MapPin, Star, Clock, RotateCcw } from 'lucide-react';
 import { PesanUlang } from '../pesanUlang';
 
@@ -95,9 +95,10 @@ export function Home({ setView, pesanUlang, onPesanLagi }: {
       <div className="px-5 mb-4">
         <div className="relative rounded-2xl overflow-hidden shadow-md flex flex-col justify-end min-h-[170px] p-5">
           {/* Background Image */}
-          <img 
-            src="https://images.unsplash.com/photo-1588168333986-5078d3ae3976?q=80&w=800&auto=format&fit=crop" 
-            alt="Catering Aminoto" 
+          <img
+            src="/foto-catering.webp"
+            alt="Sajian catering Aminoto: nasi box, sate, kangkung, dan sambal"
+            loading="lazy"
             className="absolute inset-0 w-full h-full object-cover"
           />
           {/* Dark Overlay */}
@@ -141,49 +142,38 @@ export function Home({ setView, pesanUlang, onPesanLagi }: {
         </div>
       </div>
 
-      {/* Kata #WargaAminoto */}
-      <div className="py-2 mb-4">
-        <div className="px-5 mb-3">
-          <h2 className="text-base font-bold tracking-tight text-gray-900">Kata #WargaAminoto</h2>
-        </div>
-        <div className="flex overflow-x-auto hide-scrollbar gap-3 px-5 pb-4 w-full">
-          {[
-            {
-              id: 1,
-              text: "Sambel dadaknya juara banget! Lelenya garing di luar, lembut di dalam.",
-              name: "Budi",
-              branch: "#WargaAminoto Cipto"
-            },
-            {
-              id: 2,
-              text: "Bebek bumbu khasnya bener-bener beda dari yang lain, nagih!",
-              name: "Rina",
-              branch: "#WargaAminoto Sumber"
-            },
-            {
-              id: 3,
-              text: "Pesen katering buat acara kantor, pengirimannya on time dan rasanya konsisten.",
-              name: "Andi",
-              branch: "#WargaAminoto Ciledug"
-            }
-          ].map(review => (
-            <div key={review.id} className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm min-w-[220px] max-w-[240px] flex flex-col gap-2 shrink-0">
-              <div className="flex gap-1 text-yellow-400">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <Star key={star} size={12} fill="currentColor" strokeWidth={0} />
-                ))}
+      {/* Kata #WargaAminoto: hanya review asli dari Google Maps (ULASAN di data.ts).
+          Kosong = bagian ini disembunyikan. */}
+      {ULASAN.length > 0 && (
+        <div className="py-2 mb-4">
+          <div className="px-5 mb-3 flex justify-between items-end gap-3">
+            <h2 className="text-base font-bold tracking-tight text-gray-900">Kata #WargaAminoto</h2>
+            {BRANCHES[0].mapsUrl && (
+              <a href={BRANCHES[0].mapsUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-[#06402B] underline underline-offset-2 shrink-0">
+                Lihat di Google Maps
+              </a>
+            )}
+          </div>
+          <div className="flex overflow-x-auto hide-scrollbar gap-3 px-5 pb-4 w-full">
+            {ULASAN.map((ulasan, i) => (
+              <div key={i} className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm min-w-[220px] max-w-[240px] flex flex-col gap-2 shrink-0">
+                <div className="flex gap-1 text-yellow-400" aria-label={`${ulasan.bintang} dari 5 bintang`}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star key={star} size={12} fill="currentColor" strokeWidth={0} className={star <= ulasan.bintang ? '' : 'text-gray-200'} />
+                  ))}
+                </div>
+                <p className="text-xs font-medium text-gray-700 italic leading-snug flex-1">
+                  "{ulasan.teks}"
+                </p>
+                <div className="flex flex-col mt-auto pt-2 border-t border-gray-100">
+                  <span className="text-xs font-bold text-gray-900">{ulasan.nama}</span>
+                  <span className="text-[9px] text-gray-500 font-semibold">Google Maps · {ulasan.cabang}</span>
+                </div>
               </div>
-              <p className="text-xs font-medium text-gray-700 italic leading-snug flex-1">
-                "{review.text}"
-              </p>
-              <div className="flex flex-col mt-auto pt-2 border-t border-gray-100">
-                <span className="text-xs font-bold text-gray-900">{review.name}</span>
-                <span className="text-[9px] text-gray-500 font-semibold">{review.branch}</span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Kunjungi Sosial Media Kami */}
       <div className="px-5 pb-8">

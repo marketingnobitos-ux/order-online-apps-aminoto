@@ -51,8 +51,6 @@ Home → (pilih cabang di Menu) → Menu → Keranjang → Checkout (nama, WA, m
 - Satu perubahan fokus per sesi; commit kecil-kecil.
 
 ## Utang teknis yang MASIH terbuka (belum dikerjakan)
-- Testimoni "Budi/Rina/Andi" di Home masih karangan — ganti dengan review Google Maps asli.
-- Foto banner catering masih hotlink Unsplash — ganti dengan foto milik Aminoto.
-- Warna bar keranjang (maroon `#800000` + emas `#D4AF37`) menyimpang dari design system —
-  putuskan: kembalikan ke sistem, atau resmikan sebagai warna aksen.
+- Bagian "Kata #WargaAminoto" di Home disembunyikan sampai `ULASAN` di `src/data.ts` diisi
+  review Google Maps asli (testimoni karangan Budi/Rina/Andi sudah dihapus).
 - PRD vs kode: bottom nav (FAQ vs Keranjang) dan urutan pilih-outlet — selaraskan dokumennya.

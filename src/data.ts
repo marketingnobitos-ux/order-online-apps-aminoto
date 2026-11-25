@@ -75,6 +75,11 @@ export const ADMIN_WHATSAPP = '6288213044259';
 // Kosong = kartu Gabung Komunitas di halaman Pesanan Terkirim tidak ditampilkan.
 export const KOMUNITAS_WA_URL = '';
 
+// Review ASLI dari Google Maps untuk bagian "Kata #WargaAminoto" di Home.
+// Jangan isi dengan review karangan. Kosong = bagian itu disembunyikan.
+// Contoh: { teks: 'Sambelnya mantap...', nama: 'Nama di Google', cabang: 'Cipto', bintang: 5 }
+export const ULASAN: { teks: string; nama: string; cabang: string; bintang: number }[] = [];
+
 // Tambahan harga kalau ikan / ayam / bebek dibakar (bukan digoreng).
 export const BIAYA_BAKAR = 2000;
 

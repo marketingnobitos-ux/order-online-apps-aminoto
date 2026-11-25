@@ -54,7 +54,7 @@ export function Header({ view, setView, cart }: { view: string, setView: (v: str
       >
         <ShoppingBag size={24} strokeWidth={2.5} />
         {cartCount > 0 && (
-          <span className="absolute top-0 right-0 translate-x-1 -translate-y-1 bg-[#800000] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-[#FDFBF7]">
+          <span className="absolute top-0 right-0 translate-x-1 -translate-y-1 bg-[#D4FF00] text-[#06402B] text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border border-[#FDFBF7]">
             {cartCount}
           </span>
         )}
