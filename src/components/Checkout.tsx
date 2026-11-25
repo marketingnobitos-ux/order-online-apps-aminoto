@@ -4,7 +4,7 @@ import { PaymentMethod } from '../types';
 import { Bike } from 'lucide-react';
 
 export function Checkout(props: any) {
-  const { name, setName, whatsapp, setWhatsapp, paymentMethod, setPaymentMethod, note, setNote, selectedBranch, setSelectedBranch, setView, cart } = props;
+  const { name, setName, whatsapp, setWhatsapp, paymentMethod, setPaymentMethod, note, setNote, selectedBranch, setSelectedBranch, setView, cart, dataTersimpan, onLupakanData } = props;
   
   const [errors, setErrors] = useState({ name: false, whatsapp: false, paymentMethod: false });
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -75,6 +75,14 @@ export function Checkout(props: any) {
               placeholder="Contoh: 081234567890"
             />
             {errors.whatsapp && <span className="text-[10px] text-red-500 font-medium mt-1">Masukkan nomor WhatsApp yang valid (contoh: 081234567890)</span>}
+            {dataTersimpan && (
+              <p className="text-[11px] font-medium text-gray-500 mt-1">
+                Diisi dari pesanan sebelumnya ·{' '}
+                <button type="button" onClick={onLupakanData} className="font-bold text-[#06402B] underline underline-offset-2">
+                  Hapus
+                </button>
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">

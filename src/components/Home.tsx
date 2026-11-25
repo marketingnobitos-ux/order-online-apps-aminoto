@@ -1,9 +1,17 @@
 import React from 'react';
 import { BRANCHES, ADMIN_WHATSAPP, JAM_ORDER_ONLINE, ONLINE_ORDER_OPEN_FRIDAY, JAM_OUTLET, OUTLET_OPEN_FRIDAY, formatJam, isOutletOpen } from '../data';
-import { ArrowRight, Instagram, Facebook, MapPin, Star, Clock } from 'lucide-react';
+import { ArrowRight, Instagram, Facebook, MapPin, Star, Clock, RotateCcw } from 'lucide-react';
+import { PesanUlang } from '../pesanUlang';
 
-export function Home({ setView }: { setView: (v: string) => void }) {
+export function Home({ setView, pesanUlang, onPesanLagi }: {
+  setView: (v: string) => void;
+  pesanUlang: PesanUlang | null;
+  onPesanLagi: () => void;
+}) {
   const outletBuka = isOutletOpen(); // dihitung di zona Asia/Jakarta (WIB)
+  const ringkasanPesanUlang = pesanUlang?.items
+    .map(c => `${c.menuItem.name}${c.variant ? ` (${c.variant})` : ''} ×${c.quantity}`)
+    .join(', ');
   return (
     <div className="flex flex-col">
       {/* Header section in Home */}
@@ -25,6 +33,30 @@ export function Home({ setView }: { setView: (v: string) => void }) {
           </span>
         </div>
       </div>
+
+      {/* Pesan lagi: muncul kalau HP ini pernah mengirim pesanan */}
+      {pesanUlang && (
+        <div className="px-5 pb-2">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#06402B] text-[#D4FF00] flex items-center justify-center shrink-0">
+                <RotateCcw size={18} strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Pesanan terakhirmu</p>
+                <p className="text-[13px] font-semibold text-gray-900 leading-snug line-clamp-2 mt-0.5">{ringkasanPesanUlang}</p>
+                <p className="text-[13px] font-bold text-[#06402B] mt-1">Rp {pesanUlang.total.toLocaleString('id-ID')}</p>
+              </div>
+            </div>
+            <button
+              onClick={onPesanLagi}
+              className="w-full bg-[#06402B] text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              Pesan lagi <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Cabang Kami */}
       <div className="py-6">

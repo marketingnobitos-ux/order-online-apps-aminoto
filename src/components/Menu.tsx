@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { MENU_ITEMS, BRANCHES, KELOMPOK_MENU } from '../data';
-import { Search, Plus, Minus, Check } from 'lucide-react';
+import { MENU_ITEMS, BRANCHES, KELOMPOK_MENU, BIAYA_BAKAR, bukaOrderBerikutnya } from '../data';
+import { Search, Plus, Minus, Check, Clock } from 'lucide-react';
 import { MenuItem, CartItem } from '../types';
 
 const TABS = ['Semua', ...KELOMPOK_MENU];
@@ -28,6 +28,13 @@ export function Menu({ addToCart, updateQuantity, cart, selectedBranch, setSelec
   const [notif, setNotif] = useState<{ teks: string; id: number } | null>(null);
   const timerNotif = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timerNotif.current), []);
+
+  // Info order online tutup; dicek ulang tiap menit supaya pita hilang sendiri saat jam buka.
+  const [bukaLagi, setBukaLagi] = useState(() => bukaOrderBerikutnya());
+  useEffect(() => {
+    const t = setInterval(() => setBukaLagi(bukaOrderBerikutnya()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   const tampilkanNotif = (teks: string) => {
     clearTimeout(timerNotif.current);
@@ -75,6 +82,14 @@ export function Menu({ addToCart, updateQuantity, cart, selectedBranch, setSelec
   return (
     <div className="flex flex-col min-h-full">
       <div className="sticky top-0 bg-[#FDFBF7] z-50 border-b border-gray-100 px-5 pt-4 pb-2 shadow-sm">
+        {bukaLagi && (
+          <div role="status" className="flex items-center gap-2.5 bg-[#06402B] text-white rounded-2xl px-3.5 py-2.5 mb-4">
+            <Clock size={16} strokeWidth={2.5} className="text-[#D4FF00] shrink-0" />
+            <span className="text-[12px] font-semibold leading-snug">
+              Order online sedang tutup. Buka lagi <strong className="text-[#D4FF00]">{bukaLagi}</strong>.
+            </span>
+          </div>
+        )}
         <div className="flex justify-between items-center mb-5">
           <span className="text-gray-500 font-semibold text-sm">Pilih Pesanan Anda</span>
           <select
@@ -217,7 +232,7 @@ export function Menu({ addToCart, updateQuantity, cart, selectedBranch, setSelec
         const nameLower = variantModalItem.name.toLowerCase();
         const isTelor = nameLower === 'telor dadar / ceplok';
         const needsCut = ['ayam negri', 'ayam kampung', 'bebek'].includes(nameLower);
-        const finalPrice = isTelor ? variantModalItem.price : variantModalItem.price + (selectedCooking === 'Bakar' ? 2000 : 0);
+        const finalPrice = isTelor ? variantModalItem.price : variantModalItem.price + (selectedCooking === 'Bakar' ? BIAYA_BAKAR : 0);
         const isReadyToAdd = isTelor ? !!selectedEgg : (selectedCooking && (!needsCut || selectedCut));
 
         return (

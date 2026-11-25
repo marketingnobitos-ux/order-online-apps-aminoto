@@ -10,6 +10,7 @@ import { BottomNav } from './components/BottomNav';
 import { StickyCheckoutBar } from './components/StickyCheckoutBar';
 import { FAQ } from './components/FAQ';
 import { PesananTerkirim, bacaPesananTerakhir, simpanPesananTerakhir, hapusPesananTerakhir } from './components/PesananTerkirim';
+import { bacaPelanggan, simpanPelanggan, hapusPelanggan, bacaPesanUlang, simpanPesanUlang, PesanUlang } from './pesanUlang';
 // Admin di-lazy load agar supabase-js tidak ikut bundle pelanggan.
 const Admin = React.lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
 
@@ -49,9 +50,12 @@ export default function App() {
   }, [view]);
 
   const [cart, setCart] = useState<CartItem[]>(sesi.cart ?? []);
-  
-  const [name, setName] = useState<string>(sesi.name ?? '');
-  const [whatsapp, setWhatsapp] = useState<string>(sesi.whatsapp ?? '');
+
+  // Nama + WA dari pesanan sebelumnya (disimpan di HP) mengisi checkout otomatis.
+  const [pelanggan, setPelanggan] = useState(bacaPelanggan);
+  const [name, setName] = useState<string>(sesi.name || pelanggan?.nama || '');
+  const [whatsapp, setWhatsapp] = useState<string>(sesi.whatsapp || pelanggan?.whatsapp || '');
+  const [pesanUlang, setPesanUlang] = useState<PesanUlang | null>(bacaPesanUlang);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>(sesi.paymentMethod ?? '');
   const [note, setNote] = useState<string>(sesi.note ?? '');
   const [selectedBranch, setSelectedBranch] = useState<string>(sesi.selectedBranch ?? 'Aminoto Cipto');
@@ -83,10 +87,39 @@ export default function App() {
   // useEffect) karena browser bisa meninggalkan halaman sebelum React sempat render ulang.
   const catatPesananTerkirim = (pesanan: PesananTerakhir) => {
     simpanPesananTerakhir(pesanan);
+    const dataPelanggan = { nama: name.trim(), whatsapp: whatsapp.trim() };
+    simpanPelanggan(dataPelanggan);
+    setPelanggan(dataPelanggan);
+    simpanPesanUlang(cart, selectedBranch);
+    setPesanUlang(bacaPesanUlang());
     simpanSesi({ view: 'terkirim', cart: [], name, whatsapp, paymentMethod, note, selectedBranch });
     setPesananTerakhir(pesanan);
     setCart([]);
     setView('terkirim');
+  };
+
+  // "Pesan lagi" dari Home: isi pesanan terakhir ditambahkan ke keranjang (harga menu terbaru),
+  // lalu pelanggan dibawa ke Keranjang untuk mengecek / mengubah sebelum checkout.
+  const pesanLagi = () => {
+    if (!pesanUlang) return;
+    setCart(prev => {
+      const hasil = [...prev];
+      for (const baru of pesanUlang.items) {
+        const i = hasil.findIndex(c => c.menuItem.id === baru.menuItem.id && c.variant === baru.variant);
+        if (i >= 0) hasil[i] = { ...hasil[i], quantity: hasil[i].quantity + baru.quantity };
+        else hasil.push(baru);
+      }
+      return hasil;
+    });
+    if (pesanUlang.cabang) setSelectedBranch(pesanUlang.cabang);
+    setView('cart');
+  };
+
+  const lupakanPelanggan = () => {
+    hapusPelanggan();
+    setPelanggan(null);
+    setName('');
+    setWhatsapp('');
   };
 
   const selesaiPesanan = () => {
@@ -110,7 +143,7 @@ export default function App() {
         <Header view={view} setView={setView} cart={cart} />
         
         <main ref={mainRef} className="flex-1 overflow-y-auto w-full relative pb-24">
-          {view === 'home' && <Home setView={setView} />}
+          {view === 'home' && <Home setView={setView} pesanUlang={pesanUlang} onPesanLagi={pesanLagi} />}
           {view === 'menu' && (
             <Menu
               addToCart={addToCart} updateQuantity={updateQuantity} cart={cart}
@@ -127,6 +160,8 @@ export default function App() {
               selectedBranch={selectedBranch} setSelectedBranch={setSelectedBranch}
               setView={setView}
               cart={cart}
+              dataTersimpan={!!pelanggan && name === pelanggan.nama && whatsapp === pelanggan.whatsapp}
+              onLupakanData={lupakanPelanggan}
             />
           )}
           {view === 'review' && (

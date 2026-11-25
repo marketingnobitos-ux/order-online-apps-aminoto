@@ -75,6 +75,9 @@ export const ADMIN_WHATSAPP = '6288213044259';
 // Kosong = kartu Gabung Komunitas di halaman Pesanan Terkirim tidak ditampilkan.
 export const KOMUNITAS_WA_URL = '';
 
+// Tambahan harga kalau ikan / ayam / bebek dibakar (bukan digoreng).
+export const BIAYA_BAKAR = 2000;
+
 // ── Jam buka (WIB / Asia-Jakarta) ──────────────────────────────────
 // Semua jam dalam MENIT sejak 00.00 WIB. Semua cabang memakai jam yang sama.
 // Hari Jumat outlet & order online baru buka 12.45 (setelah salat Jumat).
@@ -124,4 +127,15 @@ export function isOutletOpen(waktu?: Date): boolean {
 export function isOnlineOrderOpen(waktu?: Date): boolean {
   const { isFriday, minutes } = getJakartaTime(waktu);
   return minutes >= (isFriday ? ONLINE_ORDER_OPEN_FRIDAY : ONLINE_ORDER_OPEN) && minutes < ONLINE_ORDER_CLOSE;
+}
+
+// Kapan order online buka lagi, mis. "hari ini jam 12.45" atau "besok jam 10.00".
+// null kalau order online sedang buka. Dihitung di zona WIB.
+export function bukaOrderBerikutnya(waktu: Date = new Date()): string | null {
+  if (isOnlineOrderOpen(waktu)) return null;
+  const { isFriday, minutes } = getJakartaTime(waktu);
+  const bukaHariIni = isFriday ? ONLINE_ORDER_OPEN_FRIDAY : ONLINE_ORDER_OPEN;
+  if (minutes < bukaHariIni) return `hari ini jam ${formatJam(bukaHariIni)}`;
+  const besokJumat = getJakartaTime(new Date(waktu.getTime() + 24 * 60 * 60 * 1000)).isFriday;
+  return `besok jam ${formatJam(besokJumat ? ONLINE_ORDER_OPEN_FRIDAY : ONLINE_ORDER_OPEN)}`;
 }
