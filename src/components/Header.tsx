@@ -36,6 +36,13 @@ export function Header({ view, setView, cart }: { view: string, setView: (v: str
             <Menu size={24} strokeWidth={2.5} />
           </button>
         )}
+        <img
+          src="/logo-aminoto.png"
+          alt=""
+          width={36}
+          height={36}
+          className="w-9 h-9 rounded-full shrink-0"
+        />
         <span className="font-extrabold text-[#06402B] text-lg tracking-tight uppercase">
           AMINOTO
         </span>
